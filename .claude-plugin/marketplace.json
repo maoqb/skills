@@ -1,0 +1,22 @@
+{
+  "name": "maoqb-skills",
+  "owner": {
+    "name": "maoqb",
+    "email": "realqingbo@gmail.com"
+  },
+  "metadata": {
+    "description": "Personal Claude Code skills marketplace",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "drawio-diagrams",
+      "description": "Create editable draw.io (.drawio) diagrams — block/architecture diagrams, sequence diagrams, and flowcharts — programmatically, with optional PNG/SVG export.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/drawio-diagrams"
+      ]
+    }
+  ]
+}
