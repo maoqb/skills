@@ -1,31 +1,30 @@
-# Flowcharts (流程图)
+# 流程图（Flowcharts）
 
-Use the `Flowchart` builder in `scripts/drawio.py`. You describe nodes and the
-arrows between them; it places nodes on a grid from their row/col.
+用 `scripts/drawio.py` 里的 `Flowchart` 构建器。你描述节点以及它们之间的箭头；它按各节点的
+row/col 把节点放到网格上。
 
-## Node vocabulary
+## 节点词汇表
 
-| Method | Shape | Use for |
+| 方法 | 形状 | 用于 |
 | --- | --- | --- |
-| `start(label)` | green stadium | entry point ("开始") |
-| `end(label)` | red stadium | exit point ("结束") |
-| `process(label)` | blue rectangle | an action / step |
-| `decision(label)` | orange diamond | a yes/no branch ("...?") |
-| `io(label)` | yellow parallelogram | input / output |
-| `subprocess(label)` | purple predefined-process | a named sub-routine |
+| `start(label)` | 绿色体育场形 | 入口（“开始”） |
+| `end(label)` | 红色体育场形 | 出口（“结束”） |
+| `process(label)` | 蓝色矩形 | 一个动作 / 步骤 |
+| `decision(label)` | 橙色菱形 | 一个是/否分支（“…?”） |
+| `io(label)` | 黄色平行四边形 | 输入 / 输出 |
+| `subprocess(label)` | 紫色预定义流程框 | 一个具名子过程 |
 
-`flow(src, dst, label="")` draws an arrow; label the branches out of a decision
-(e.g. "是" / "否", "Yes" / "No").
+`flow(src, dst, label="")` 画一条箭头；给判断框引出的分支打标签（例如 “是” / “否”，
+“Yes” / “No”）。
 
-## Layout model
+## 布局模型
 
-- Every node has a **row** (top→bottom) and **column** (left→right).
-- Rows auto-increment in call order, so a straight-line flow needs no
-  positioning at all — just add nodes in order.
-- For a branch, give the side path its own column and align its row with the
-  decision using `row=`. Read `fc.current_row` to know where you are.
+- 每个节点都有一个 **row**（自上而下）和 **column**（自左向右）。
+- row 按调用顺序自动递增，所以一条直线流程根本不用定位——按顺序加节点即可。
+- 对于分支，给旁路单独一列，并用 `row=` 让它的行与判断框对齐。读 `fc.current_row` 可知道
+  当前到哪一行了。
 
-## Example — a branch that rejoins
+## 示例——一个分支后又汇合
 
 ```python
 import sys; sys.path.insert(0, "<skill>/scripts")
@@ -49,11 +48,11 @@ fc.flow(no, z)
 fc.save("login_flow.drawio")
 ```
 
-## Tips
+## 提示
 
-- Keep labels short; rely on shape colour/type to convey role.
-- Decision nodes are taller (80px) by default so the diamond isn't cramped.
-- For a loop-back arrow (e.g. "重试"), just `flow()` from a later node to an
-  earlier one — orthogonal routing handles the elbow.
-- Wider boxes: pass `w=200` to any node method.
-- Multiple parallel branches: use columns 1, 2, 3 … and matching rows.
+- 标签简短；靠形状的颜色/类型传达角色。
+- 判断节点默认更高（80px），免得菱形太挤。
+- 要画回环箭头（例如“重试”），直接从靠后的节点 `flow()` 回靠前的节点——正交布线会自动处理
+  折角。
+- 更宽的框：给任意节点方法传 `w=200`。
+- 多条并行分支：用列 1、2、3 … 配上对应的 row。
