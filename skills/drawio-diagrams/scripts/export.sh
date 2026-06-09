@@ -1,44 +1,86 @@
 #!/usr/bin/env bash
-# export.sh — render a .drawio file to PNG / SVG / PDF using the drawio CLI.
+# export.sh — render a .drawio file to SVG / PNG / PDF.
 #
-# The .drawio file itself is always the source of truth (open it in draw.io to
-# edit). This script just produces a flat image for embedding in notes/docs.
+# Two export paths:
+#   1. Python SVG (always works, no install needed):
+#      Calls save_svg() on the builder that generated the diagram.
+#      Default format; SVG embeds cleanly in markdown with ![](./x.svg).
+#   2. drawio CLI (higher fidelity, needed for PNG/PDF):
+#      Uses the drawio desktop app. Install instructions below.
+#      On headless Linux: xvfb-run -a ./export.sh diagram.drawio png
 #
-# Requirements: the drawio desktop app provides the CLI. If it's missing:
+# Installing the drawio CLI:
 #   macOS:  brew install --cask drawio
-#           # CLI then lives at /Applications/draw.io.app/Contents/MacOS/draw.io
-#   Linux:  download the AppImage / .deb from github.com/jgraph/drawio-desktop
-#   npm:    not available — drawio-desktop is an Electron app, not an npm pkg.
+#   Linux:  download .deb / AppImage from github.com/jgraph/drawio-desktop
 #
 # Usage:
-#   ./export.sh diagram.drawio                 # -> diagram.png (default)
-#   ./export.sh diagram.drawio svg             # -> diagram.svg
-#   ./export.sh diagram.drawio pdf out.pdf     # explicit output path
-#
-# Headless note: exporting needs a display. On a headless Linux box wrap the
-# command with `xvfb-run -a ...`.
+#   ./export.sh diagram.drawio            # -> diagram.svg  (Python, always works)
+#   ./export.sh diagram.drawio svg        # -> diagram.svg
+#   ./export.sh diagram.drawio png        # -> diagram.png  (needs drawio CLI)
+#   ./export.sh diagram.drawio pdf out.pdf
 
 set -euo pipefail
 
-SRC="${1:?usage: export.sh <file.drawio> [png|svg|pdf] [output]}"
-FMT="${2:-png}"
+SRC="${1:?usage: export.sh <file.drawio> [svg|png|pdf] [output]}"
+FMT="${2:-svg}"
 OUT="${3:-${SRC%.*}.$FMT}"
+SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
-# locate the drawio binary
+# ── Try the drawio CLI for png/pdf ──────────────────────────────────────────
+DRAWIO_CLI=""
 if command -v drawio >/dev/null 2>&1; then
-  DRAWIO="drawio"
+  DRAWIO_CLI="drawio"
 elif [ -x "/Applications/draw.io.app/Contents/MacOS/draw.io" ]; then
-  DRAWIO="/Applications/draw.io.app/Contents/MacOS/draw.io"
-else
-  echo "ERROR: drawio CLI not found." >&2
-  echo "Install it (macOS): brew install --cask drawio" >&2
-  echo "The .drawio file is still valid — open it at https://app.diagrams.net" >&2
-  exit 1
+  DRAWIO_CLI="/Applications/draw.io.app/Contents/MacOS/draw.io"
 fi
 
-# --crop trims whitespace; --scale 2 gives a crisp PNG. Adjust as needed.
-EXTRA=()
-if [ "$FMT" = "png" ]; then EXTRA=(--scale 2); fi
+if [ -n "$DRAWIO_CLI" ] && [ "$FMT" != "svg" ]; then
+  EXTRA=()
+  if [ "$FMT" = "png" ]; then EXTRA=(--scale 2); fi
+  "$DRAWIO_CLI" --export --format "$FMT" --crop "${EXTRA[@]}" --output "$OUT" "$SRC"
+  echo "wrote $OUT  (drawio CLI)"
+  exit 0
+fi
 
-"$DRAWIO" --export --format "$FMT" --crop "${EXTRA[@]}" --output "$OUT" "$SRC"
-echo "wrote $OUT"
+# ── Python SVG export (no external tools needed) ────────────────────────────
+if [ "$FMT" = "png" ] || [ "$FMT" = "pdf" ]; then
+  echo "NOTE: drawio CLI not found — exporting SVG instead of $FMT." >&2
+  FMT="svg"; OUT="${SRC%.*}.svg"
+fi
+
+# Find the companion Python generation script (same stem, same or parent dir).
+GEN_PY="${SRC%.*}.py"
+[ -f "$GEN_PY" ] || GEN_PY="$(dirname "$SRC")/$(basename "${SRC%.*}").py"
+
+if [ -f "$GEN_PY" ]; then
+  python3 - "$GEN_PY" "$OUT" "$SKILL_DIR/scripts" <<'PYEOF'
+import sys, importlib.util
+
+gen_script, out_path, scripts_dir = sys.argv[1], sys.argv[2], sys.argv[3]
+sys.path.insert(0, scripts_dir)
+import drawio as _dmod
+
+_last = [None]
+for _cls in (_dmod.Sequence, _dmod.BlockDiagram, _dmod.Flowchart):
+    _orig = _cls.save
+    def _wrap(self, p, _o=_orig):
+        _last[0] = self
+        return _o(self, p)
+    _cls.save = _wrap
+
+spec = importlib.util.spec_from_file_location("_gen", gen_script)
+mod  = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+
+if _last[0] is not None:
+    _last[0].save_svg(out_path)
+    print(f"wrote {out_path}  (Python SVG)")
+else:
+    print("WARNING: no builder found in generation script", file=sys.stderr)
+    sys.exit(1)
+PYEOF
+else
+  echo "ERROR: no generation script found for $SRC" >&2
+  echo "To generate SVG, call builder.save_svg('${SRC%.*}.svg') in your script." >&2
+  exit 1
+fi

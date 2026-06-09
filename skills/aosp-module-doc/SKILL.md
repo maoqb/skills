@@ -164,9 +164,10 @@ description: >-
 ## 图
 
 图是源码分析的**辅助**：用来把代码里看不直观的结构和时序呈现出来，不替代源码、也不喧宾夺主。
-都来自核实过的源码。用 **`drawio-diagrams`** 技能生成（可编辑的 `.drawio` + 导出的 `png`/`svg`），
-存在文章旁边，用 `![标题](./xxx.png)` 内嵌，并配一句说明，注明它与头部基于同一版本。架构框图和关键
-时序图最有价值（时序尤其要和真实调用源码对照）。
+都来自核实过的源码。用 **`drawio-diagrams`** 技能生成。每张图都要同时保存 `.drawio`（可编辑源）
+和 `.svg`（markdown 可内嵌图片）；用 `![标题](./xxx.svg)` 内嵌到文章，并配一句说明。`.svg` 由
+`drawio.py` 的 `save_svg()` 直接生成，无需 drawio CLI，任何环境都能工作。架构框图和关键时序图
+最有价值（时序尤其要和真实调用源码对照）。
 
 **每张图后面都必须紧跟对应说明，且逐项分行介绍图里的元素**——架构框图就一个方框一行、时序图就一条
 关键消息/参与者一行，绝不要把所有元素揉进一段。说明要和图里的标签对得上。
@@ -207,9 +208,9 @@ description: >-
    <module>/
      <module>.md
      <module>.html                (optional, see below)
-     <module>_architecture.drawio (+ .png/.svg)
-     <module>_<submodule>.drawio  (+ .png/.svg)
-     <module>_<flow>.drawio       (+ .png/.svg)
+     <module>_architecture.drawio (+ .svg)
+     <module>_<submodule>.drawio  (+ .svg)
+     <module>_<flow>.drawio       (+ .svg)
    ```
    汇报各文件路径；说明图可在 draw.io 中编辑。
 
@@ -221,7 +222,7 @@ markdown 是唯一来源。若还想产出带样式的独立 HTML（可点击的
 python3 <skill>/scripts/md2html.py <module>.md <module>.html
 ```
 它会读取 `## 目录` 章节，并用带序号的 H2/H3 标题构建一个可点击目录来替换它，同时给每个标题加锚点
-id。图片是相对引用的，所以把 `.html` 和 `.png` 放在一起。
+id。图片是相对引用的，所以把 `.html` 和 `.svg` 放在一起。
 
 ## 取源配方（已验证可用）
 

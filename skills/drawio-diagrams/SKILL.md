@@ -36,20 +36,28 @@ description: >-
    - `references/format.md` —— 仅当需要手写自定义 XML 时。
 
 3. **用 `scripts/drawio.py` 构建**。写一小段 Python 脚本：导入对应的构建器，声明
-   节点/消息/方框，再调用 `.save("<name>.drawio")`。开头保留
+   节点/消息/方框，同时调用 `.save("<name>.drawio")` **和** `.save_svg("<name>.svg")`。开头保留
    `sys.path.insert(0, "<skill>/scripts")` 以便导入成功。输出文件名取得有辨识度；除非用户
    指定路径，否则默认放当前工作目录。
+
+   ```python
+   bd.save("architecture.drawio")      # 可编辑源文件
+   bd.save_svg("architecture.svg")     # 可内嵌到 markdown 的图片（无需外部工具）
+   ```
 
 4. **校验文件格式正确**：
    ```bash
    python3 -c "import xml.dom.minidom as m; m.parse('<name>.drawio'); print('OK')"
+   python3 -c "import xml.etree.ElementTree as ET; ET.parse('<name>.svg'); print('OK')"
    ```
 
-5. **仅在用户要图片时导出**（PNG/SVG/PDF）。运行 `scripts/export.sh <name>.drawio png`。这需要
-   drawio CLI；若未安装，脚本会打印安装说明。`.drawio` 文件始终是主交付物——绝不要因为导出工具
-   缺失而卡住。
+5. **SVG 是 markdown 内嵌的默认格式**。每张图都用 `save_svg()` 生成 `.svg`，在 markdown 里用
+   `![标题](./name.svg)` 引用——这不需要 drawio CLI，纯 Python 即可，任何环境都能工作。
+   若需要 PNG/PDF（更高保真度），运行 `scripts/export.sh <name>.drawio png`，它会在 drawio CLI
+   可用时使用 CLI，否则自动降级为 SVG。`.drawio` 文件始终保留以便在 draw.io 中编辑。
 
-6. **告诉用户**文件路径、它可在 draw.io / app.diagrams.net 中编辑，以及（如相关）如何导出图片。
+6. **告诉用户**各文件路径：`.drawio` 可在 draw.io / app.diagrams.net 中编辑，`.svg` 已可在
+   markdown/HTML 中直接显示。
 
 ## 关于 skill 路径的写法
 
