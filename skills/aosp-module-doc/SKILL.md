@@ -12,204 +12,149 @@ description: >-
   先对照实时源码核实。
 ---
 
-# AOSP module / tool documentation
+# AOSP 模块 / 工具文档
 
-Produce **one technical article** about a single AOSP module or tool. The
-deliverable reads like something a senior engineer wrote after reading the
-source — concrete, specific, flowing prose — not like a generated template.
-Diagrams are part of the article and carry a lot of the explanation.
+为单个 AOSP 模块或工具产出**一篇技术文章**。成品要读起来像一位资深工程师读完源码后写的——
+具体、有细节、连贯成文，而不是套模板生成的。图是文章的一部分，承担大量讲解。
 
-Two things are non-negotiable: **the content is verified against current source**
-(never written from memory), and **the article follows the structure below**.
+两条不可妥协：**内容必须对照当前源码核实**（绝不凭记忆写），且**文章遵循下面的结构**。
 
-There is **no local AOSP checkout** — read source online via gitiles (recipes at
-the end). Default branch is `aosp main` (`refs/heads/main`) unless the user names
-a specific branch/release tag. **The branch/version is stated once, in the
-article header, and nowhere else** (see Source grounding).
+**本地没有 AOSP 检出**——通过 gitiles 在线读源码（取源配方见文末）。默认分支是 `aosp main`
+（`refs/heads/main`），除非用户指定了具体分支/发布 tag。**分支/版本只在文章头部写一次，别处不再写**
+（见「源码为本」）。
 
-## Source grounding
+## 源码为本
 
-1. **Never describe a mechanism from memory.** Read the actual current source
-   before writing any factual claim. If you can't fetch something, say so rather
-   than filling the gap from memory.
-2. **State the version once, in the header.** The article opens with a single
-   line like `> 本文基于 Android <version>（aosp/<branch>）。`. Do **not** sprinkle
-   `path @ branch` tags through the body — no per-claim citations, no repo paths
-   in section text. Referring to a real file/type/function by name in prose
-   (e.g. "在 `release_config.go` 的 `GenerateReleaseConfig()` 里") is normal and
-   encouraged; pasting full gitiles paths is noise.
-3. **Read before guessing paths.** Browse the directory listing first; a 404
-   means the path differs from memory — re-check, don't guess again.
-4. **Unverified content** is either left out or marked once with a short
-   `（未核实）`. Don't ship memory-based guesses dressed as fact.
-5. **Source is the truth; docs and blogs are supplements.** Besides reading the
-   code, search the official docs (`source.android.com`) and reputable blogs /
-   conference talks for the module, and absorb what genuinely improves the
-   article — naming rules, usage patterns, rationale, history, gotchas. Verify
-   anything you take against the source; if a blog contradicts the code, trust
-   the code. Skip low-quality SEO/AI-spam pages — quality over quantity.
-6. **End with a required `参考文档` section** (the last numbered section) listing
-   each reference actually used, each with a one-line note on what it's good for.
-   Include the authoritative source dirs and the useful official docs/blogs;
-   omit anything you didn't actually draw on.
+1. **绝不凭记忆描述机制。** 写任何事实性结论前，先读当前真实源码。取不到就如实说明，而不是用
+   记忆填补空缺。
+2. **版本只在头部写一次。** 文章开头用一行，如 `> 本文基于 Android <version>（aosp/<branch>）。`。
+   正文里**不要**到处撒 `path @ branch` 标签——不做逐句引用，不在章节正文里贴仓库路径。在行文中
+   按名字引用真实的文件/类型/函数（例如“在 `release_config.go` 的 `GenerateReleaseConfig()` 里”）
+   是正常且鼓励的；贴完整 gitiles 路径则是噪音。
+3. **先读再猜路径。** 先浏览目录列表；404 通常意味着路径和记忆不符——重新核对，别再猜。
+4. **未核实的内容**要么略去，要么用一个简短的 `（未核实）` 标注一次。不要把凭记忆的猜测当事实交付。
+5. **源码是事实，文档与博客是补充。** 除读代码外，检索该模块的官方文档（`source.android.com`）
+   和靠谱的博客/技术分享，吸收真正能提升文章质量的内容——命名规则、用法、设计动因、历史、坑点。
+   你采纳的每一点都要回到源码核对；博客与代码冲突时以代码为准。低质的 SEO/AI 垃圾页直接跳过——
+   质量优先于数量。
+6. **结尾固定一个 `参考文档` 章节**（最后一个带序号的章节），列出真正用到的每条参考，各配一句话
+   说明它好在哪。把权威源码目录和有用的官方文档/博客都列上；没真正参考过的就不要列。
 
-## Writing style — avoid the "AI 腔"
+## 写作风格——避免“AI 腔”
 
-The user specifically dislikes generated-sounding docs. Apply these:
+用户尤其反感读起来像生成的文档。务必做到：
 
-- **Prose first, lists second.** Explain in connected paragraphs. Use bullet
-  lists only for genuinely enumerable things (flags, fields, file lists). Don't
-  turn every explanation into a bullet shower.
-- **No filler or hedging.** Cut "值得注意的是 / 总而言之 / 需要强调的是 / 总的来说",
-  cut restating the section title in its first sentence, cut empty summary
-  paragraphs.
-- **Be concrete.** Real file names, type names, field names, numbers, defaults.
-  Specifics replace adjectives — never "灵活强大的机制", say what it actually does.
-- **No decoration.** No emoji, no bold-on-every-line, no "一句话：" labels. Bold
-  sparingly for genuine key terms.
-- **Section titles name real things,** not abstract buckets. Prefer
-  "配置文件与 textproto schema" over "核心概念/数据模型"; prefer "Binder 事务的内核数据
-  结构" over "数据模型".
-- Match the user's language (Chinese stays Chinese) and write like internal
-  engineering documentation.
+- **以行文为主，列表为辅。** 用连贯的段落讲解。只有真正可枚举的东西（参数、字段、文件清单）才用
+  列表。别把每段解释都拆成一堆要点。
+- **不要废话和模棱两可。** 删掉“值得注意的是 / 总而言之 / 需要强调的是 / 总的来说”，删掉第一句
+  复述标题，删掉空洞的总结段。
+- **要具体。** 真实的文件名、类型名、字段名、数字、默认值。用细节代替形容词——别写“灵活强大的
+  机制”，直接说它到底做什么。
+- **不加装饰。** 不用 emoji，不每行加粗，不用“一句话：”这类标签。加粗只用于真正的关键词，且要克制。
+- **章节标题要命名真实的东西**，而非抽象的筐。用“配置文件与 textproto schema”而非“核心概念/数据
+  模型”；用“Binder 事务的内核数据结构”而非“数据模型”。
+- 语言跟随用户（中文就保持中文），按内部工程文档的口吻来写。
 
-## Article structure
+## 文章结构
 
-Sections in this order. Adapt depth to the module; never drop 概述, 整体架构,
-子模块, 关键流程, 调试工具.
+章节按此顺序。深度随模块调整；但概述、整体架构、子模块、关键流程、调试工具绝不可省。
 
-### Numbering & table of contents (required)
+### 序号与目录（必需）
 
-- **Number every heading.** H2 uses Chinese ordinals `一、二、三、…`; H3 uses
-  `<n>.<m>` where `<n>` is the parent's arabic number (e.g. under 「四、子模块详解」
-  the subsections are `4.1`, `4.2`, …); H4 uses `<n>.<m>.<k>` (e.g. `4.2.1`).
-- **Include a `## 目录` section** right after the header/version line, before
-  「一、概述」. Write it as a nested list of the numbered section + subsection
-  titles. (When exported to HTML it becomes a clickable TOC automatically.) The
-  `目录` heading itself is not numbered.
+- **每个标题都编号。** H2 用中文序号 `一、二、三、…`；H3 用 `<n>.<m>`，其中 `<n>` 是父级的阿拉伯
+  数字（例如「四、子模块详解」下的子节是 `4.1`、`4.2`、…）；H4 用 `<n>.<m>.<k>`（例如 `4.2.1`）。
+- **在头部/版本行之后、「一、概述」之前放一个 `## 目录` 章节**，写成带序号的章节+子节标题嵌套列表。
+  （导出 HTML 时会自动变成可点击目录。）`目录` 这个标题本身不编号。
 
-### Heading wording (required)
+### 标题措辞（必需）
 
-- **Headings are declarative noun phrases.** No question form — never
-  「它解决什么问题」「数据怎么流动」「如何…」「为什么…」. Use a noun phrase instead:
-  「解决的问题」「数据流向」「取值合并规则」.
-- **No parentheses in headings** — neither `（…）` nor `(…)`. A heading states the
-  topic; any aside, qualifier, or "纠偏" note belongs in the body, not the title.
-  E.g. not 「1.2 编写格式（一个重要纠偏）」, but 「1.2 编写格式从 scl 迁移到 textproto」.
+- **标题用陈述性名词短语。** 不用疑问句——绝不写「它解决什么问题」「数据怎么流动」「如何…」
+  「为什么…」。改用名词短语：「解决的问题」「数据流向」「取值合并规则」。
+- **标题里不要括号**——`（…）` 和 `(…)` 都不行。标题只点出主题；任何补充、限定或“纠偏”说明放正文，
+  不放标题。例如不写「1.2 编写格式（一个重要纠偏）」，而写「1.2 编写格式从 scl 迁移到 textproto」。
 
-### Anti–wall-of-text (required)
+### 反“大段堆字”（必需）
 
-A reader should be able to scan the article by its headings. Do not pile
-paragraphs under one heading.
+读者应能靠标题扫读全文。不要把一堆段落堆在一个标题下。
 
-- **Every 一级标题 (H2) must contain at least one 二级标题 (H3).** No H2 may hold a
-  long body passage directly. An H2 may open with a 1–2 sentence lead, but its
-  substance lives in its 二级标题 subsections — this applies to *every* top-level
-  section, including short ones like 概述 / 整体架构 / 关键流程 (split them, e.g.
-  概述 → "解决什么问题" + "重要纠偏/版本变化" + "代码与数据在哪"). The structural
-  sections `目录` and `参考文档` are exempt — they are plain annotated lists.
-- **Heading depth is capped at 四级标题** (markdown H5, the `x.y.z.w` form). Don't
-  nest deeper; if you need more, the structure is wrong — flatten or regroup.
-- A subsection (H3) opens with a 1–2 sentence lead, then breaks its content into
-  **H4 sub-headings**, a short list, or a table — whenever it covers more than
-  one distinct point or would run past ~3 paragraphs.
-- **The core-logic submodule and the 调试工具 section are the usual offenders —
-  they must be decomposed.** E.g. split a core library into "职责与关键文件" +
-  "关键算法/流程(配图)"; split 调试工具 into one H3 per tool or per task
-  (查取值 / 看生效值 / 读产物 / …), not one long blob.
-- Prefer several short, titled chunks over one dense passage. Each chunk earns
-  its heading; if a chunk has nothing distinct to say, merge it.
+- **每个一级标题（H2）下至少要有一个二级标题（H3）。** 任何 H2 不许直接挂一大段正文。H2 可以有
+  1–2 句引子，但实质内容要落在二级标题子节里——这对*每个*顶层章节都适用，包括概述/整体架构/关键
+  流程这类短章（把它们拆开，例如 概述 → “解决什么问题” + “重要纠偏/版本变化” + “代码与数据在哪”）。
+  结构性章节 `目录` 与 `参考文档` 例外——它们是带注释的纯列表。
+- **标题深度上限是四级标题**（markdown H5，即 `x.y.z.w` 形式）。别再往下嵌；若还不够，说明结构有问题
+  ——拉平或重新分组。
+- 一个子节（H3）先用 1–2 句引子起头，再把内容拆成 **H4 小标题**、短列表或表格——只要它涉及多个不同
+  要点，或会超过约 3 段。
+- **核心逻辑子模块和 调试工具 章节是惯犯——它们必须拆分。** 例如把核心库拆成“职责与关键文件” +
+  “关键算法/流程(配图)”；把 调试工具 按工具或按任务拆成一节一个 H3（查取值 / 看生效值 / 读产物 / …），
+  而不是一大坨。
+- 宁可多个有标题的短块，也不要一段密集长文。每个块都要对得起它的标题；若某块没什么独立内容，就并掉。
 
-1. **头部** — title + one line stating the Android version/branch. Nothing else.
+1. **头部** —— 标题 + 一行写明 Android 版本/分支。仅此而已。
 
-2. **概述** — the module/tool's overall function: what it is, what problem it
-   solves, where it sits in Android. Flowing prose. If a mechanism changed across
-   versions or is commonly misunderstood (e.g. scl→textproto), weave that into
-   the prose naturally — don't bolt on a labeled "纠偏" block.
+2. **概述** —— 模块/工具的整体功能：它是什么、解决什么问题、在 Android 里处于什么位置。连贯成文。
+   若某机制跨版本变过或常被误解（例如 scl→textproto），自然地融进行文——别另起一个带标签的“纠偏”块。
 
-3. **整体架构** — the spine of the whole article. **Embed an architecture block
-   diagram (框图)** and walk the reader through how data/control flows across the
-   components. The diagram is 提纲挈领:
-   - **Each box = one component that gets its own 子模块 subsection later**, and
-     the box label should match (or clearly map to) that subsection's title.
-   - **Box text is concise but informative** — name the component AND hint its
-     responsibility (a short second line), not a single bare word, not a sentence.
-   - The set of boxes should preview the article's structure, so a reader who
-     only looks at this diagram understands the module's decomposition.
+3. **整体架构** —— 全文的骨架。**内嵌一张架构框图（框图）**，并带读者走一遍数据/控制如何在各组件
+   之间流动。这张图提纲挈领：
+   - **每个方框 = 后面会有独立子模块小节的一个组件**，方框标签应与那个小节的标题对应（或清晰映射）。
+   - **方框文字简明但有信息量**——点出组件名*并*提示其职责（简短的第二行），不是一个孤零零的词，也
+     不是一整句话。
+   - 这组方框应预告文章的结构，让只看这张图的读者也能明白模块是怎么拆解的。
 
-4. **<concrete data/concept section>** — the core data the module operates on:
-   schemas, config formats, key structs/protos/enums, state. **Title it after the
-   real thing** (e.g. "配置文件与 textproto schema", "核心数据结构与状态"), not the
-   generic words "核心概念/数据模型". Quote real definitions from source.
+4. **<具体命名的数据/概念章>** —— 模块操作的核心数据：schema、配置格式、关键结构体/proto/枚举、状态。
+   **用真实事物来命名本章**（例如“配置文件与 textproto schema”“核心数据结构与状态”），而非笼统的
+   “核心概念/数据模型”。从源码引用真实定义。
 
-5. **子模块详解** — one subsection per architecture box, titled to match. Go as
-   deep as the source allows: responsibility, the key files/functions/interfaces,
-   how it talks to the other submodules, important edge cases. **Each submodule
-   should carry its own 时序图 or 示意图** (its internal call sequence, state
-   transitions, or data shape) — the more detailed, the better. This is where the
-   article earns its value; don't keep it shallow.
+5. **子模块详解** —— 一个架构方框对应一个子节，标题与之对应。尽源码所允许地深入：职责、关键
+   文件/函数/接口、它如何与其它子模块交互、重要边界情况。**每个子模块都要配自己的时序图或示意图**
+   （内部调用时序、状态转换或数据形态）——越细越好。这是文章价值所在，别写浅了。
 
-6. **关键流程** — the main end-to-end flow(s). **Embed a sequence diagram (时序图)
-   or flowchart (流程图)** for at least the primary flow.
+6. **关键流程** —— 主要的端到端流程。**至少为主流程内嵌一张时序图（时序图）或流程图（流程图）**。
 
-7. **配置与使用** — how to invoke/configure: CLI flags, env vars, build vars,
-   file layout, entry points (how `lunch`/`m`/a syscall triggers it).
+7. **配置与使用** —— 如何调用/配置：CLI 参数、环境变量、构建变量、文件布局、入口（`lunch`/`m`/某个
+   系统调用如何触发它）。
 
-8. **调试工具** — concrete: real CLIs, dump/print commands, artifacts to inspect,
-   logs, build vars to query, test dirs. Must be runnable, not hand-wavy. Always
-   include.
+8. **调试工具** —— 要具体：真实的 CLI、dump/print 命令、可查看的产物、日志、可查询的构建变量、测试
+   目录。必须可直接照着跑，不能空泛。务必包含。
 
-9. **参考文档** — the last section. An annotated list of the references actually
-   used: authoritative source dirs, useful official docs (`source.android.com`),
-   and quality blogs/talks. One short line per entry saying what it offers. No
-   subsections (exempt from the H3 rule).
+9. **参考文档** —— 最后一节。真正用到的参考的带注释列表：权威源码目录、有用的官方文档
+   （`source.android.com`）、优质博客/分享。每条一句话说明它提供了什么。无子节（豁免 H3 规则）。
 
-(Author's pre-delivery self-check stays out of the article — see the checklist
-at the end of this skill. The 参考文档 section, by contrast, is part of the
-article and required.)
+（交付前的作者自检不写进文章——见本技能末尾的清单。相比之下，`参考文档` 章节是文章的一部分，必需。）
 
-## Diagrams
+## 图
 
-Diagrams come from the verified source and do real explanatory work. Generate
-them with the **`drawio-diagrams`** skill (editable `.drawio` + exported
-`png`/`svg`), save next to the article, embed with `![标题](./xxx.png)`, and put a
-one-line caption noting it's based on the same version as the header.
+图来自核实过的源码，承担真正的讲解工作。用 **`drawio-diagrams`** 技能生成（可编辑的 `.drawio` +
+导出的 `png`/`svg`），存在文章旁边，用 `![标题](./xxx.png)` 内嵌，并配一句说明，注明它与头部基于同一
+版本。
 
-- **整体架构 → 框图 (block):** boxes map 1:1 to 子模块 subsections (see §3). Make
-  labels meaningful; this diagram is the outline.
-- **每个子模块 → 时序图/示意图:** prefer a sequence diagram for call/interaction
-  order, a flowchart for step/decision logic, a block/schematic for data shape or
-  state. Detailed beats pretty.
-- **关键流程 → 时序图 or 流程图.**
+- **整体架构 → 框图 (block)：** 方框与子模块小节 1:1 对应（见第 3 节）。标签要有意义；这张图就是
+  提纲。
+- **每个子模块 → 时序图/示意图：** 调用/交互顺序优先用时序图，步骤/判断逻辑用流程图，数据形态或
+  状态用框图/示意图。细节胜过好看。
+- **关键流程 → 时序图 或 流程图。**
 
-Plan the architecture diagram and the submodule breakdown *together* so the boxes
-and the later subsections line up.
+把架构图和子模块拆分*一起*规划，让方框和后面的子节对得上。
 
-## Workflow
+## 工作流
 
-1. **Pin the version.** Default `aosp main`. State it in the header only.
-2. **Locate & read the real source.** Map topic → git project(s)+path(s); don't
-   trust memory for paths. `WebSearch` `android.googlesource.com <module>` or use
-   the project index, then browse directory listings and read the files behind
-   every section: schemas/protos, entry points, the core library, Android.bp,
-   READMEs. Decide the component decomposition from what you read — this drives
-   both the architecture diagram and the 子模块 sections.
-   Then **search supporting material** — official docs on `source.android.com`
-   and reputable blogs/talks — and pull in what improves the article (naming
-   rules, how to consume the thing, rationale, history), verifying each point
-   against the source. Note which references you actually used for `参考文档`.
-   > Path-mapping gotcha: gitiles project `platform/build` → tree `build/make/`;
-   > `platform/build/release` → `build/release/`; `platform/build/soong` →
-   > `build/soong/`. A 404 usually means wrong project/path — re-check the listing.
-3. **Plan structure + diagrams together,** then write the article in flowing prose
-   per the style rules.
-4. **Generate the diagrams** (architecture, per-submodule, key-flow) via
-   `drawio-diagrams`; embed and caption them.
-5. **Save & report.** Keep the article and all its diagrams **together in one
-   folder** so the relative `![](./...)` image links resolve. The skill does
-   **not** mandate a location — save wherever fits the current context (the
-   working directory, or wherever the user keeps such docs); let Claude Code
-   decide from where it was invoked. Illustrative layout (one folder per module):
+1. **定版本。** 默认 `aosp main`。只在头部写出来。
+2. **定位并阅读真实源码。** 把主题映射到 git 项目+路径；路径别凭记忆。用 `WebSearch` 搜
+   `android.googlesource.com <module>` 或查项目索引，然后浏览目录列表、阅读支撑每一节的文件：
+   schema/proto、入口、核心库、Android.bp、README。从读到的内容决定组件如何拆解——这同时驱动架构图
+   和子模块章节。
+   然后**检索支撑材料**——`source.android.com` 上的官方文档和靠谱的博客/分享——把能提升文章的内容
+   拉进来（命名规则、怎么消费它、设计动因、历史），每一点都对照源码核实。记下你实际用到的参考，供
+   `参考文档` 用。
+   > 路径映射坑：gitiles 项目 `platform/build` → 源码树 `build/make/`；`platform/build/release` →
+   > `build/release/`；`platform/build/soong` → `build/soong/`。404 通常意味着项目/路径错了——回去
+   > 重新核对列表。
+3. **结构 + 图一起规划，** 然后按风格规则用连贯行文写文章。
+4. **生成各图**（架构、各子模块、关键流程）用 `drawio-diagrams`；内嵌并配说明。
+5. **保存并汇报。** 把文章和它所有的图**放在同一个文件夹**里，好让相对的 `![](./...)` 图片链接能
+   解析。本技能**不**规定保存位置——存在当前上下文合适的地方（工作目录，或用户存放此类文档的地方）；
+   由 Claude Code 依其被调用的位置决定。示意布局（一个模块一个文件夹）：
    ```
    <module>/
      <module>.md
@@ -218,54 +163,45 @@ and the later subsections line up.
      <module>_<submodule>.drawio  (+ .png/.svg)
      <module>_<flow>.drawio       (+ .png/.svg)
    ```
-   Report the paths; note diagrams are editable in draw.io.
+   汇报各文件路径；说明图可在 draw.io 中编辑。
 
-### Optional: HTML export
+### 可选：导出 HTML
 
-The markdown is the single source. To also produce a styled, standalone HTML
-(clickable auto-generated TOC, styled code/tables, figures), run the bundled
-converter — no dependencies needed:
+markdown 是唯一来源。若还想产出带样式的独立 HTML（可点击的自动目录、带样式的代码/表格、图）：运行
+内置转换器，无需任何依赖：
 ```
 python3 <skill>/scripts/md2html.py <module>.md <module>.html
 ```
-It reads the `## 目录` section and replaces it with a clickable TOC built from the
-numbered H2/H3 headings, and gives every heading an anchor id. Images are
-referenced relatively, so keep the `.html` next to the `.png` files.
+它会读取 `## 目录` 章节，并用带序号的 H2/H3 标题构建一个可点击目录来替换它，同时给每个标题加锚点
+id。图片是相对引用的，所以把 `.html` 和 `.png` 放在一起。
 
-## Retrieval recipes (verified working)
+## 取源配方（已验证可用）
 
-Use gitiles = `android.googlesource.com` (server-rendered HTML, WebFetch reads it
-reliably):
+用 gitiles = `android.googlesource.com`（服务端渲染的 HTML，WebFetch 能可靠读取）：
 
-- **Directory listing:** `.../platform/<project>/+/refs/heads/main/<subdir>/`
-- **File content:** `.../platform/<project>/+/refs/heads/main/<path>`
-- **Raw bytes (base64 — decode):** append `?format=TEXT`.
-- **File history (when did X change):** `.../platform/<project>/+log/refs/heads/main/<path>`
-- **Project index:** `https://android.googlesource.com/`
+- **目录列表：** `.../platform/<project>/+/refs/heads/main/<subdir>/`
+- **文件内容：** `.../platform/<project>/+/refs/heads/main/<path>`
+- **原始字节（base64，需解码）：** 在 URL 后追加 `?format=TEXT`。
+- **文件历史（某处何时改的）：** `.../platform/<project>/+log/refs/heads/main/<path>`
+- **项目索引：** `https://android.googlesource.com/`
 
-Common projects: `platform/build` (→`build/make/`), `platform/build/release`,
-`platform/build/soong`, `platform/frameworks/base`, `platform/system/core`.
+常见项目：`platform/build`（→`build/make/`）、`platform/build/release`、`platform/build/soong`、
+`platform/frameworks/base`、`platform/system/core`。
 
-**Do NOT fetch `cs.android.com`** — JS SPA, WebFetch gets an empty shell. Read via
-gitiles. The WebFetch summarizer may truncate long files — fetch in parts or use
-`?format=TEXT`.
+**不要抓 `cs.android.com`**——它是 JS 单页应用，WebFetch 只会拿到空壳。请走 gitiles 读取。WebFetch
+的摘要模型可能截断长文件——分段抓，或用 `?format=TEXT`。
 
-## Author's pre-delivery self-check (not part of the article)
-- [ ] Version stated once in the header; no `path @ branch` tags in the body.
-- [ ] `## 目录` present after the header; every H2/H3/H4 is numbered
-      (一、二 / 4.1 / 4.2.1).
-- [ ] Every 一级标题 (H2) has ≥1 二级标题 (H3) — no H2 holds a long passage
-      directly. Depth never exceeds 四级标题 (H5).
-- [ ] No heading is a question; no heading contains `（…）` / `(…)`.
-- [ ] Official docs / quality blogs searched; valuable points absorbed (verified
-      against source). Final `参考文档` section lists each reference used, annotated.
-- [ ] No wall of text — dense topics (core logic, 调试工具) split into titled
-      chunks / lists / tables; the article scans by its headings.
-- [ ] Reads like human engineering prose — no AI filler, no bullet-shower, no
-      abstract section titles.
-- [ ] Architecture 框图 boxes map 1:1 to 子模块 subsections, labels informative.
-- [ ] Every 子模块 has a detailed 时序图/示意图; key flow has its diagram.
-- [ ] 调试工具 section is concrete and runnable.
-- [ ] No `.scl`-era / `Android.mk`-era (or other stale) assumption survived; every
-      mechanism was read from current source. Unverified bits left out or marked
-      once with `（未核实）`.
+## 作者交付前自检（不属于文章）
+- [ ] 版本只在头部写一次；正文里没有 `path @ branch` 标签。
+- [ ] 头部之后有 `## 目录`；每个 H2/H3/H4 都编了号（一、二 / 4.1 / 4.2.1）。
+- [ ] 每个一级标题（H2）都至少有 1 个二级标题（H3）——没有 H2 直接挂一大段。深度从不超过四级标题（H5）。
+- [ ] 没有标题是疑问句；没有标题含 `（…）` / `(…)`。
+- [ ] 检索过官方文档/优质博客；有价值的点已吸收（且对照源码核实）。结尾 `参考文档` 章节列出每条用到的
+      参考并加注释。
+- [ ] 没有大段堆字——密集主题（核心逻辑、调试工具）拆成带标题的块/列表/表格；全文能靠标题扫读。
+- [ ] 读起来像人写的工程行文——没有 AI 废话、没有要点轰炸、没有抽象章节标题。
+- [ ] 架构框图的方框与子模块小节 1:1 对应，标签有信息量。
+- [ ] 每个子模块都有一张详细的时序图/示意图；关键流程有它自己的图。
+- [ ] 调试工具章节具体、可直接照着跑。
+- [ ] 没有 `.scl` 时代 / `Android.mk` 时代（或其它过时）的假设残留；每个机制都读自当前源码。未核实的
+      部分要么略去，要么用 `（未核实）` 标注一次。

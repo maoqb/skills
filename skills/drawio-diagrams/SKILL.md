@@ -11,56 +11,50 @@ description: >-
 
 # drawio-diagrams
 
-Generate editable `.drawio` files (mxGraph XML) for three diagram families:
-**block/architecture (框图)**, **sequence (时序图)**, and **flowchart (流程图)**.
-The output opens in draw.io desktop or <https://app.diagrams.net> for editing,
-and can be exported to PNG/SVG.
+为三类图生成可编辑的 `.drawio` 文件（mxGraph XML）：**框图/架构图（block/architecture）**、
+**时序图（sequence）**、**流程图（flowchart）**。产物可在 draw.io 桌面版或
+<https://app.diagrams.net> 中打开编辑，并可导出为 PNG/SVG。
 
-## Why a builder instead of raw XML
+## 为什么用构建器而非手写 XML
 
-The `.drawio` format places every shape at explicit pixel coordinates. Writing
-that by hand is slow and error-prone — sequence diagrams especially, where each
-message must align across vertical lifelines. `scripts/drawio.py` does the
-geometry: you describe *what connects to what*, it computes *where things go*.
-Reach for raw XML only for layouts the builders can't express.
+`.drawio` 格式把每个图形都放在明确的像素坐标上，手写既慢又易错——时序图尤甚，每条消息都要在
+竖直生命线之间对齐。`scripts/drawio.py` 负责几何计算：你只描述*谁与谁相连*，它来算*东西摆在哪*。
+只有当构建器表达不了某种布局时，才直接写 XML。
 
-## Workflow
+## 工作流
 
-1. **Identify the diagram type** from the request:
-   - steps / decisions / "如果…则…" / an algorithm → **flowchart**
-   - actors exchanging messages over time, request/response, call order → **sequence**
-   - components / modules / services and how they connect → **block/architecture**
-   - If genuinely ambiguous, ask; otherwise pick the best fit and proceed.
+1. **从需求判断图的类型**：
+   - 步骤 / 判断 / “如果…则…” / 某个算法 → **流程图（flowchart）**
+   - 角色之间随时间交换消息、请求/响应、调用顺序 → **时序图（sequence）**
+   - 组件 / 模块 / 服务以及它们如何相连 → **框图/架构图（block/architecture）**
+   - 若确实含糊就发问；否则选最贴合的一种继续。
 
-2. **Read the matching reference** for the API and a worked example:
+2. **读对应的参考文档**，了解 API 和一个完整示例：
    - `references/flowchart.md`
    - `references/sequence.md`
    - `references/block.md`
-   - `references/format.md` — only when hand-writing custom XML.
+   - `references/format.md` —— 仅当需要手写自定义 XML 时。
 
-3. **Build it** with `scripts/drawio.py`. Write a short Python script that
-   imports the right builder, declares nodes/messages/blocks, and calls
-   `.save("<name>.drawio")`. Keep `sys.path.insert(0, "<skill>/scripts")` at the
-   top so the import resolves. Choose a descriptive output filename; default to
-   the current working directory unless the user specifies a path.
+3. **用 `scripts/drawio.py` 构建**。写一小段 Python 脚本：导入对应的构建器，声明
+   节点/消息/方框，再调用 `.save("<name>.drawio")`。开头保留
+   `sys.path.insert(0, "<skill>/scripts")` 以便导入成功。输出文件名取得有辨识度；除非用户
+   指定路径，否则默认放当前工作目录。
 
-4. **Validate** the file is well-formed:
+4. **校验文件格式正确**：
    ```bash
    python3 -c "import xml.dom.minidom as m; m.parse('<name>.drawio'); print('OK')"
    ```
 
-5. **Export only if asked** for an image (PNG/SVG/PDF). Run
-   `scripts/export.sh <name>.drawio png`. This needs the drawio CLI; if it's not
-   installed the script prints install instructions. The `.drawio` file is
-   always the primary deliverable — never block on export tooling.
+5. **仅在用户要图片时导出**（PNG/SVG/PDF）。运行 `scripts/export.sh <name>.drawio png`。这需要
+   drawio CLI；若未安装，脚本会打印安装说明。`.drawio` 文件始终是主交付物——绝不要因为导出工具
+   缺失而卡住。
 
-6. **Tell the user** the file path, that it's editable in draw.io /
-   app.diagrams.net, and (if relevant) how to export an image.
+6. **告诉用户**文件路径、它可在 draw.io / app.diagrams.net 中编辑，以及（如相关）如何导出图片。
 
-## Quoting the skill path
+## 关于 skill 路径的写法
 
-Throughout, replace `<skill>` with this skill's directory (the folder
-containing this SKILL.md). A robust pattern inside a generated script:
+全文中把 `<skill>` 替换为本技能所在目录（即包含这份 SKILL.md 的文件夹）。在生成的脚本里，一种
+稳妥写法：
 
 ```python
 import os, sys
@@ -68,20 +62,16 @@ SKILL = os.path.dirname(os.path.abspath(__file__))  # if script lives in <skill>
 sys.path.insert(0, os.path.join(SKILL, "scripts"))
 ```
 
-or just hard-code the absolute path to `scripts/` that you can see from the
-skill location.
+或者直接硬编码你从技能位置能看到的 `scripts/` 绝对路径。
 
-## Conventions that keep diagrams readable
+## 让图保持易读的约定
 
-- Short labels; let shape and colour carry the meaning. The builders use
-  draw.io's native colour palette so results look hand-made, not generated.
-- One concept per box; push detail to a second label line with `\n`.
-- Label every decision branch ("是"/"否") and every sequence message.
-- Match the user's language in labels (Chinese stays Chinese).
+- 标签简短；让形状和颜色承载含义。构建器用 draw.io 原生调色板，效果像手画而非生成的。
+- 一个方框一个概念；细节用 `\n` 放到第二行标签。
+- 给每个判断分支（“是”/“否”）和每条时序消息都打标签。
+- 标签语言跟随用户（中文就保持中文）。
 
-## Scope
+## 适用范围
 
-Covers flowcharts, sequence diagrams, and block/architecture diagrams. For
-other draw.io chart types (ER, mind maps, org charts, Gantt), the low-level
-`Diagram` class plus `references/format.md` still apply — you supply the
-coordinates and styles.
+覆盖流程图、时序图、框图/架构图。对于其它 draw.io 图类型（ER 图、思维导图、组织结构图、甘特图），
+底层的 `Diagram` 类配合 `references/format.md` 仍然适用——由你自己提供坐标和样式。
