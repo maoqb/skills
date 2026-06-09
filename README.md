@@ -27,39 +27,34 @@ To update later:
 
 ### drawio-diagrams
 
-Generate editable **draw.io** (`.drawio`, mxGraph XML) diagrams programmatically
-and optionally export them to PNG/SVG/PDF. Covers three families:
+以程序化方式生成可编辑的 **draw.io**（`.drawio`，mxGraph XML）图，并可选导出为
+PNG/SVG/PDF。覆盖三类：
 
-- **Flowcharts (流程图)** — start/process/decision/io/end nodes on an auto grid
-- **Sequence diagrams (时序图)** — participants + ordered messages, lifelines auto-aligned
-- **Block / architecture diagrams (框图)** — labelled blocks, connections, grouped layers
+- **流程图** —— start/process/decision/io/end 节点，自动网格布局
+- **时序图** —— 参与者 + 有序消息，生命线自动对齐
+- **框图/架构图** —— 带标签的方框、连线、分组分层
 
-The skill bundles a Python builder (`scripts/drawio.py`) that does the coordinate
-math, reference docs per diagram type, and an export script. Trigger it by asking
-Claude to "draw a flowchart / sequence diagram / architecture diagram", "画个流程图",
-"画一张架构框图", etc.
+技能内置一个 Python 构建器（`scripts/drawio.py`）负责坐标计算，每类图各有参考文档，
+另带一个导出脚本。让 Claude「画个流程图」「画一张架构框图」「draw a flowchart /
+sequence diagram」等即可触发。
 
-**Optional dependency:** image export needs the draw.io desktop CLI
-(`brew install --cask drawio` on macOS). The `.drawio` file itself opens in
-draw.io desktop or <https://app.diagrams.net> with no install.
+**可选依赖：** 导出图片需要 draw.io 桌面版 CLI（macOS 上 `brew install --cask drawio`）。
+`.drawio` 文件本身用 draw.io 桌面版或 <https://app.diagrams.net> 即可打开，无需安装。
 
 ### aosp-module-doc
 
-Generate a complete technical document for **one AOSP module or tool** — the
-build system, a tool like `release_config` / `aconfig` / Soong, or a framework
-subsystem like `init` / binder / `system_server`. Every factual claim is verified
-against **current upstream source** (read live from `android.googlesource.com`),
-not training memory, so the output tracks the latest AOSP instead of going stale.
+为**单个 AOSP 模块或工具**生成一篇完整的技术文档——编译系统、`release_config` /
+`aconfig` / Soong 这类工具，或 `init` / binder / `system_server` 这类框架子系统。每一条
+事实都对照**当前上游源码**核实（实时读取 `android.googlesource.com`），不凭训练记忆，
+所以产出始终跟随最新 AOSP，而不会过时。
 
-The article follows a fixed structure — 概述 → 整体架构 → 数据/概念 → 各子模块 →
-关键流程 → 配置与使用 → 调试工具 → 参考文档 — with numbered headings, a table of
-contents, and embedded draw.io diagrams (an architecture 框图 plus per-submodule
-时序图/示意图, produced via the `drawio-diagrams` skill). It also searches the
-official docs and absorbs what improves the article. Trigger it with "写/生成 AOSP
-XXX 模块/工具的文档", "讲清楚 AOSP 的 XXX 机制", etc.
+文章结构固定——概述 → 整体架构 → 数据/概念 → 各子模块 → 关键流程 → 配置与使用 →
+调试工具 → 参考文档——标题带序号、附目录，并内嵌 draw.io 图（一张架构框图，外加每个子模块
+各自的时序图/示意图，由 `drawio-diagrams` 技能生成）。它还会检索官方文档，吸收能提升质量的
+内容。用「写/生成 AOSP XXX 模块/工具的文档」「讲清楚 AOSP 的 XXX 机制」等触发。
 
-The skill bundles `scripts/md2html.py`, a zero-dependency converter that renders
-the Markdown to a styled standalone HTML with a clickable, auto-generated TOC.
+技能内置 `scripts/md2html.py`，一个零依赖的转换器，可把 Markdown 渲染成带可点击目录、
+样式美观的独立 HTML。
 
 ## Layout
 
