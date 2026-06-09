@@ -25,9 +25,10 @@ description: >-
 
 两条不可妥协：**内容必须对照当前源码核实**（绝不凭记忆写），且**文档遵循下面的结构、以源码为主线**。
 
-**本地没有 AOSP 检出**——通过 gitiles 在线读源码（取源配方见文末）。默认分支是 `aosp main`
-（`refs/heads/main`），除非用户指定了具体分支/发布 tag。**分支/版本只在文章头部写一次，别处不再写**
-（见「源码为本」）。
+**源码读取优先级：本地 > gitiles 在线。** 开始前先判断源码来源（取源配方见文末）：若工作目录
+或用户指定的路径下已有 AOSP 检出，直接用 `Read`/`Bash` 读本地文件；没有本地检出时才走 gitiles。
+默认分支是 `aosp main`（`refs/heads/main`），除非用户指定了具体分支/发布 tag。**分支/版本只在
+文章头部写一次，别处不再写**（见「源码为本」）。
 
 ## 源码为本
 
@@ -44,7 +45,7 @@ description: >-
    **每个代码段顶部加一行注释标明出处**（文件路径，必要时带函数名），注释用该语言的语法：Go / proto
    用 `//`，textproto / make / shell 用 `#`。例如 `// <项目>/<路径>/<文件> — <函数或片段>`。
    （这是正文里展示源码位置的唯一渠道；版本仍只在头部写，不在别处贴 `@ branch`。）引用精确到名字，
-   片段来自 gitiles。
+   片段来自本地文件或 gitiles。
 4. **先读再猜路径。** 先浏览目录列表；404 通常意味着路径和记忆不符——重新核对，别再猜。
 5. **未核实的内容**要么略去，要么用一个简短的 `（未核实）` 标注一次。不要把凭记忆的猜测当事实交付。
 6. **源码是事实，文档与博客是补充。** 除读代码外，检索该模块的官方文档（`source.android.com`）
@@ -183,16 +184,20 @@ description: >-
 ## 工作流
 
 1. **定版本。** 默认 `aosp main`。只在头部写出来。
-2. **定位并阅读真实源码。** 把主题映射到 git 项目+路径；路径别凭记忆。用 `WebSearch` 搜
-   `android.googlesource.com <module>` 或查项目索引，然后浏览目录列表、阅读支撑每一节的文件：
-   schema/proto、入口、核心库、Android.bp、README。从读到的内容决定组件如何拆解——这同时驱动架构图
-   和子模块章节。
+2. **定位并阅读真实源码。** 先判断源码来源：
+   - **本地有检出：** 优先用 `Read`/`Bash`（`find`、`grep`）直接读本地文件树。先用
+     `find <aosp_root> -name "Android.bp" -path "*<module>*"` 等命令定位目标目录，再逐个
+     读取 schema/proto、入口、核心库、README。本地检出的版本/分支就是文章头部写的版本。
+   - **本地无检出：** 走 gitiles——把主题映射到 git 项目+路径，路径别凭记忆。用 `WebSearch` 搜
+     `android.googlesource.com <module>` 或查项目索引，然后浏览目录列表、阅读支撑每一节的文件。
+     > 路径映射坑：gitiles 项目名和源码树路径常常不一致，例如项目 `platform/build` → 源码树
+     > `build/make/`，`platform/build/soong` → `build/soong/`。404 通常意味着项目/路径错了——
+     > 回去重新核对列表。
+
+   两条路殊途同归：从读到的内容决定组件如何拆解——这同时驱动架构图和子模块章节。
    然后**检索支撑材料**——`source.android.com` 上的官方文档和靠谱的博客/分享——把能提升文章的内容
    拉进来（命名规则、怎么消费它、设计动因、历史），每一点都对照源码核实。记下你实际用到的参考，供
    `参考文档` 用。
-   > 路径映射坑：gitiles 项目名和源码树路径常常不一致，例如项目 `platform/build` → 源码树
-   > `build/make/`，`platform/build/soong` → `build/soong/`。404 通常意味着项目/路径错了——回去
-   > 重新核对列表。
 3. **结构 + 图一起规划，** 然后按风格规则用连贯行文写文章。
 4. **生成各图**（架构、各子模块、关键流程）用 `drawio-diagrams`；内嵌并配说明。
 5. **保存并汇报。** 把文章和它所有的图**放在同一个文件夹**里，好让相对的 `![](./...)` 图片链接能
@@ -220,7 +225,25 @@ id。图片是相对引用的，所以把 `.html` 和 `.png` 放在一起。
 
 ## 取源配方（已验证可用）
 
-用 gitiles = `android.googlesource.com`（服务端渲染的 HTML，WebFetch 能可靠读取）：
+### 本地源码
+
+工作目录就在 AOSP 检出根下，或用户明确指定了本地路径时，直接用文件系统工具读源码：
+
+```bash
+# 定位模块目录
+find <aosp_root> -name "Android.bp" -path "*<module>*" | head -20
+# 列目录
+ls <aosp_root>/<path>/
+# 读文件（用 Read 工具）
+# 搜符号
+grep -r "FuncName" <aosp_root>/<path>/ --include="*.go" -l
+```
+
+本地读取没有网络延迟，也不受 gitiles 截断限制，优先使用。
+
+### gitiles 在线
+
+本地无检出时走 gitiles = `android.googlesource.com`（服务端渲染的 HTML，WebFetch 能可靠读取）：
 
 - **目录列表：** `.../platform/<project>/+/refs/heads/main/<subdir>/`
 - **文件内容：** `.../platform/<project>/+/refs/heads/main/<path>`
