@@ -167,7 +167,8 @@ paragraphs under one heading.
    subsections (exempt from the H3 rule).
 
 (Author's pre-delivery self-check stays out of the article — see the checklist
-at the end of this skill. A "参考来源" appendix is optional, off by default.)
+at the end of this skill. The 参考文档 section, by contrast, is part of the
+article and required.)
 
 ## Diagrams
 
@@ -206,17 +207,20 @@ and the later subsections line up.
    per the style rules.
 4. **Generate the diagrams** (architecture, per-submodule, key-flow) via
    `drawio-diagrams`; embed and caption them.
-5. **Save & report.** Layout:
+5. **Save & report.** Keep the article and all its diagrams **together in one
+   folder** so the relative `![](./...)` image links resolve. The skill does
+   **not** mandate a location — save wherever fits the current context (the
+   working directory, or wherever the user keeps such docs); let Claude Code
+   decide from where it was invoked. Illustrative layout (one folder per module):
    ```
-   AOSP/<module>/
+   <module>/
      <module>.md
      <module>.html                (optional, see below)
      <module>_architecture.drawio (+ .png/.svg)
      <module>_<submodule>.drawio  (+ .png/.svg)
      <module>_<flow>.drawio       (+ .png/.svg)
    ```
-   Save under the user's notes dir if known (e.g. `/Users/qingbo/Notes/AOSP/`),
-   else cwd. Report the paths; note diagrams are editable in draw.io.
+   Report the paths; note diagrams are editable in draw.io.
 
 ### Optional: HTML export
 
