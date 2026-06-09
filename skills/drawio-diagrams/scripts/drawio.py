@@ -172,12 +172,21 @@ class Diagram:
         return cid
 
     def add_edge(self, source, target, value="", style=EDGE_DEFAULT,
-                 cid=None, parent="1") -> str:
+                 cid=None, parent="1", waypoints=None) -> str:
         cid = cid or self._next_id("e")
+        if waypoints:
+            pts = "".join(f'              <mxPoint x="{wx}" y="{wy}" />\n'
+                          for wx, wy in waypoints)
+            geo = (f'          <mxGeometry relative="1" as="geometry">\n'
+                   f'            <Array as="points">\n{pts}'
+                   f'            </Array>\n'
+                   f'          </mxGeometry>\n')
+        else:
+            geo = '          <mxGeometry relative="1" as="geometry" />\n'
         self.cells.append(
             f'        <mxCell id="{cid}" value="{_esc(value)}" style="{style}" '
             f'edge="1" parent="{parent}" source="{source}" target="{target}">\n'
-            f'          <mxGeometry relative="1" as="geometry" />\n'
+            f'{geo}'
             f'        </mxCell>'
         )
         return cid
@@ -567,33 +576,62 @@ class BlockDiagram:
         self._pos: dict[str, tuple] = {}       # cid -> (x, y, w, h)
         self._labels: dict[str, str] = {}      # cid -> label
         self._colors: dict[str, str] = {}      # cid -> color name
-        self._connections: list[tuple] = []    # (src, dst, label, directed, dashed)
+        self._connections: list[tuple] = []    # (src, dst, label, directed, dashed, waypoints)
         self._groups: list[tuple] = []         # (label, members, pad)
         self._pending_groups: list[tuple] = []
+        self._title_top: set = set()           # cids whose label renders at top (containers)
 
     def block(self, label, col=0, row=0, x=None, y=None, w=None, h=None,
-              color="blue", rounded=True) -> str:
+              color="blue", rounded=True, title_top=False) -> str:
         w = w or self.W
-        h = h or self.H
+        if h is None:
+            # auto-size height so text never overflows: 20px per line + 16px padding
+            n_lines = label.count("\n") + 1
+            h = max(self.H, n_lines * 20 + 16)
         if x is None:
             x = self.MARGIN + col * self.COL_W
         if y is None:
             y = self.MARGIN + row * self.ROW_H
         style = (f"rounded={1 if rounded else 0};whiteSpace=wrap;html=1;"
                  + _FILL.get(color, _FILL["blue"]))
+        if title_top:
+            style += "verticalAlign=top;"
         cid = self.d.add_vertex(label, x, y, w, h, style)
         self._pos[cid] = (x, y, w, h)
         self._labels[cid] = label
         self._colors[cid] = color
+        if title_top:
+            self._title_top.add(cid)
         return cid
 
-    def connect(self, src, dst, label="", directed=True, dashed=False) -> str:
+    def child_block(self, parent_id: str, label: str, rel_x: int, rel_y: int,
+                    w: int, h: int, color: str = "blue") -> str:
+        """Place a smaller block visually inside *parent_id*.
+
+        rel_x / rel_y are pixels relative to the parent's top-left corner.
+        Both the .drawio XML and SVG use absolute coordinates so the blocks are
+        independently selectable in draw.io while visually appearing nested.
+        """
+        px, py, _, _ = self._pos[parent_id]
+        return self.block(label, x=px + rel_x, y=py + rel_y, w=w, h=h, color=color)
+
+    def connect(self, src, dst, label="", directed=True, dashed=False,
+               waypoints=None) -> str:
+        """Connect two blocks with an optional bent-line route.
+
+        waypoints: list of (x, y) intermediate points for the line.  Use these
+        to avoid arrows that would otherwise overlap other boxes or each other.
+        Example: waypoints=[(30, 200), (30, 450)] routes the line left, down,
+        then right — a clean L/U-shape around obstacles.
+        """
         style = "edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;"
         style += "endArrow=classic;" if directed else "endArrow=none;startArrow=none;"
         if dashed:
             style += "dashed=1;"
-        self._connections.append((src, dst, label, directed, dashed))
-        return self.d.add_edge(src, dst, label, style)
+        wps = waypoints or []
+        self._connections.append((src, dst, label, directed, dashed, wps))
+        return self.d.add_edge(src, dst, label, style,
+                               waypoints=wps if wps else None)
 
     def group(self, label, members: Seq[str], color="gray", pad=20) -> str:
         """Draw a dashed labelled container behind the given blocks."""
@@ -656,32 +694,51 @@ class BlockDiagram:
                 f'{_svg_esc(g_label)}</text>')
 
         # ── connections ───────────────────────────────────────────────────────
-        for src, dst, label, directed, dashed in self._connections:
+        for conn_tuple in self._connections:
+            src, dst, label, directed, dashed = conn_tuple[:5]
+            waypts = conn_tuple[5] if len(conn_tuple) > 5 else []
             if src not in self._pos or dst not in self._pos:
                 continue
             sx, sy, sw, sh = self._pos[src]
             dx, dy, dw, dh = self._pos[dst]
             scx, scy = sx + sw / 2, sy + sh / 2
             dcx, dcy = dx + dw / 2, dy + dh / 2
-            x1, y1 = _border_pt(sx, sy, sw, sh, dcx, dcy)
-            x2, y2 = _border_pt(dx, dy, dw, dh, scx, scy)
             dash_attr = 'stroke-dasharray="6,3"' if dashed else ""
             marker_attr = 'marker-end="url(#arr-block)"' if directed else ""
-            parts.append(
-                f'<line x1="{x1:.1f}" y1="{y1:.1f}" '
-                f'x2="{x2:.1f}" y2="{y2:.1f}" '
-                f'stroke="#555" stroke-width="1.5" {dash_attr} {marker_attr}/>')
-            if label:
-                mid_x = (x1 + x2) / 2
-                mid_y = (y1 + y2) / 2
-                # white background for readability
+            if waypts:
+                x1, y1 = _border_pt(sx, sy, sw, sh, waypts[0][0], waypts[0][1])
+                x2, y2 = _border_pt(dx, dy, dw, dh, waypts[-1][0], waypts[-1][1])
+                all_pts = [(x1, y1)] + list(waypts) + [(x2, y2)]
+                path_d = "M" + " L".join(f"{px:.1f},{py:.1f}" for px, py in all_pts)
                 parts.append(
-                    f'<rect x="{mid_x - 30:.1f}" y="{mid_y - 9:.1f}" '
-                    f'width="60" height="14" fill="white" opacity="0.8"/>')
+                    f'<path d="{path_d}" fill="none" stroke="#555" '
+                    f'stroke-width="1.5" {dash_attr} {marker_attr}/>')
+                if label:
+                    mid_i = len(all_pts) // 2
+                    mx, my = all_pts[mid_i]
+                    parts.append(
+                        f'<rect x="{mx - 30:.1f}" y="{my - 9:.1f}" '
+                        f'width="60" height="14" fill="white" opacity="0.8"/>')
+                    parts.append(
+                        f'<text x="{mx:.1f}" y="{my:.1f}" text-anchor="middle" '
+                        f'font-size="10" fill="#333">{_svg_esc(label)}</text>')
+            else:
+                x1, y1 = _border_pt(sx, sy, sw, sh, dcx, dcy)
+                x2, y2 = _border_pt(dx, dy, dw, dh, scx, scy)
                 parts.append(
-                    f'<text x="{mid_x:.1f}" y="{mid_y:.1f}" '
-                    f'text-anchor="middle" font-size="10" fill="#333">'
-                    f'{_svg_esc(label)}</text>')
+                    f'<line x1="{x1:.1f}" y1="{y1:.1f}" '
+                    f'x2="{x2:.1f}" y2="{y2:.1f}" '
+                    f'stroke="#555" stroke-width="1.5" {dash_attr} {marker_attr}/>')
+                if label:
+                    mid_x = (x1 + x2) / 2
+                    mid_y = (y1 + y2) / 2
+                    parts.append(
+                        f'<rect x="{mid_x - 30:.1f}" y="{mid_y - 9:.1f}" '
+                        f'width="60" height="14" fill="white" opacity="0.8"/>')
+                    parts.append(
+                        f'<text x="{mid_x:.1f}" y="{mid_y:.1f}" '
+                        f'text-anchor="middle" font-size="10" fill="#333">'
+                        f'{_svg_esc(label)}</text>')
 
         # ── blocks ────────────────────────────────────────────────────────────
         for cid, (x, y, w, h) in self._pos.items():
@@ -691,8 +748,13 @@ class BlockDiagram:
             parts.append(
                 f'<rect x="{x}" y="{y}" width="{w}" height="{h}" '
                 f'fill="{fc}" stroke="{sc}" stroke-width="1.5" rx="4"/>')
-            parts.append(_svg_text(x + w / 2, y, label, anchor="middle",
-                                   fontsize=11, box_h=h))
+            if cid in self._title_top:
+                # container block: label at top, not centred
+                parts.append(_svg_text(x + w / 2, y + 4, label, anchor="middle",
+                                       fontsize=11, box_h=None))
+            else:
+                parts.append(_svg_text(x + w / 2, y, label, anchor="middle",
+                                       fontsize=11, box_h=h))
 
         parts.append('</svg>')
         return "\n".join(parts)

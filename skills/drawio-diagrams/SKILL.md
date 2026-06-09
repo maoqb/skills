@@ -50,6 +50,10 @@ description: >-
    python3 -c "import xml.dom.minidom as m; m.parse('<name>.drawio'); print('OK')"
    python3 -c "import xml.etree.ElementTree as ET; ET.parse('<name>.svg'); print('OK')"
    ```
+   再渲染成图片自查质量（见下方“质量约束”）：
+   ```bash
+   rsvg-convert -w 1200 <name>.svg -o /tmp/preview.png   # 然后用 Read 查看
+   ```
 
 5. **SVG 是 markdown 内嵌的默认格式**。每张图都用 `save_svg()` 生成 `.svg`，在 markdown 里用
    `![标题](./name.svg)` 引用——这不需要 drawio CLI，纯 Python 即可，任何环境都能工作。
@@ -78,6 +82,20 @@ sys.path.insert(0, os.path.join(SKILL, "scripts"))
 - 一个方框一个概念；细节用 `\n` 放到第二行标签。
 - 给每个判断分支（“是”/“否”）和每条时序消息都打标签。
 - 标签语言跟随用户（中文就保持中文）。
+
+## 质量约束（生成后务必自查，尤其是框图/架构图）
+
+1. **文字不能超出方框**：`BlockDiagram.block()` 会按标签行数自动算高度，但**宽度**仍需
+   自己核对——超长的单行标识符（如 `inheritance_graph-<product>.dot`）要显式传 `w=`
+   留够空间。
+2. **同类元素用框中框**：一个方框如果概念上包含多个并列子项（例如某目录下的多种文件类型），
+   不要塞进一个标签里——用 `BlockDiagram.child_block(parent_id, label, rel_x, rel_y, w, h,
+   color=...)` 在父框内画出多个小方框，父框传 `title_top=True` 把标题置顶、给子框留空间。
+3. **箭头可以是折线**：`connect()` 支持 `waypoints=[(x,y), ...]`，让连线绕开其他方框、
+   避免多条箭头挤在一起重叠。多条折线如果同向绕路，分配不同的 x/y 通道（例如分别走
+   `x=30` 和 `x=100`），不要共用同一条通道。
+4. 上述三条的具体写法和示例见 `references/block.md`。流程图/时序图的构建器目前没有这些
+   API，但同样的“不溢出、不重叠”原则适用——必要时手动调整标签长度或换行。
 
 ## 适用范围
 
