@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "drawio-diagrams",
-      "description": "Create editable draw.io (.drawio) diagrams — block/architecture diagrams, sequence diagrams, and flowcharts — programmatically, with optional PNG/SVG export.",
+      "description": "以程序化方式生成可编辑的 draw.io（.drawio）图——框图/架构图、时序图、流程图，可选导出 PNG/SVG。",
       "source": "./",
       "strict": false,
       "skills": [
@@ -20,7 +20,7 @@
     },
     {
       "name": "aosp-module-doc",
-      "description": "Generate a complete, source-grounded technical document for one AOSP module or tool (build system, release_config, aconfig, Soong, init, binder, …): 概述/整体架构/子模块/关键流程/调试工具/参考文档, with embedded draw.io diagrams, verified against current AOSP source rather than training memory. Optional standalone HTML export.",
+      "description": "为单个 AOSP 模块或工具（编译系统、release_config、aconfig、Soong，或 init/binder/system_server 等框架子系统）生成一篇结构固定、基于当前上游源码核实的技术文档：概述/整体架构/子模块/关键流程/调试工具/参考文档，内嵌 draw.io 图，绝不凭训练记忆臆测；可选导出独立 HTML。",
       "source": "./",
       "strict": false,
       "skills": [

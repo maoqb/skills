@@ -1,17 +1,15 @@
 ---
 name: aosp-module-doc
 description: >-
-  Produce a complete technical document for ONE AOSP (Android Open Source
-  Project) module or tool — the build system, a specific tool (release_config,
-  aconfig, soong, lunch), or a framework subsystem (init, SELinux, ART, binder,
-  system_server, PackageManager, etc.). Output is a single article: 概述 →
-  整体架构(框图) → 数据/概念 → 各子模块(每个配时序图/示意图) → 关键流程 → 配置与使用 →
-  调试工具, grounded in CURRENT upstream source, never training memory. Use when
-  the user asks to 写/生成/输出 一个 AOSP 模块或工具的文档/说明/分析, or "讲清楚 AOSP
-  的 XXX 机制/模块/工具", "整理一份 XXX 的文档", "画 XXX 的架构图/时序图". Triggers on
-  "AOSP 源码", "Android 编译系统", "最新版本的 XXX". The whole point: AOSP changes
-  fast and training knowledge goes stale (e.g. release_config moved from .scl to
-  .textproto), so always verify against live source first.
+  为单个 AOSP（Android 开源项目）模块或工具产出一篇完整的技术文档——可以是编译系统、某个工具
+  （release_config、aconfig、soong、lunch），或某个框架子系统（init、SELinux、ART、binder、
+  system_server、PackageManager 等）。产出一篇结构固定的文章：概述 → 整体架构(框图) →
+  数据/概念 → 各子模块(每个配时序图/示意图) → 关键流程 → 配置与使用 → 调试工具 → 参考文档，
+  全部基于当前上游源码核实，绝不凭训练记忆臆测。当用户要「写/生成/输出 一个 AOSP 模块或工具的
+  文档/说明/分析」「讲清楚 AOSP 的 XXX 机制/模块/工具」「整理一份 XXX 的文档」「画 XXX 的
+  架构图/时序图」时使用；也会被「AOSP 源码」「Android 编译系统」「最新版本的 XXX」触发。核心价值：
+  AOSP 演进很快、训练知识容易过时（例如 release_config 已从 .scl 改为 .textproto），因此务必
+  先对照实时源码核实。
 ---
 
 # AOSP module / tool documentation

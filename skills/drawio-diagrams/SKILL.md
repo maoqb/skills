@@ -1,15 +1,12 @@
 ---
 name: drawio-diagrams
 description: >-
-  Create editable draw.io (.drawio) diagrams — block/architecture diagrams (框图/架构图),
-  sequence diagrams (时序图/序列图), and flowcharts (流程图) — by generating mxGraph XML
-  programmatically, optionally exporting to PNG/SVG. Use this whenever the user wants to
-  draw, diagram, or visualize a flow, process, algorithm, system architecture, component
-  layout, module relationship, request/response interaction, or call sequence — including
-  phrasings like "画个流程图", "画一个时序图", "框图", "画张架构图", "draw a flowchart/sequence/block
-  diagram", "diagram this", "可视化这个流程", or asking for a .drawio/diagrams.net file. Prefer
-  this over ASCII art or Mermaid when the user names drawio/diagrams.net or wants an
-  editable diagram file they can open and tweak.
+  以程序化方式生成可编辑的 draw.io（.drawio，mxGraph XML）图——框图/架构图、时序图/序列图、
+  流程图，并可选导出为 PNG/SVG。当用户想绘制或可视化某个流程、过程、算法、系统架构、组件布局、
+  模块关系、请求/响应交互或调用时序时使用——包括「画个流程图」「画一个时序图」「框图」「画张架构图」
+  「draw a flowchart/sequence/block diagram」「diagram this」「可视化这个流程」或索要一个
+  .drawio / diagrams.net 文件等说法。当用户点名 drawio / diagrams.net，或想要一个能打开再修改的
+  可编辑图文件时，优先使用本技能，而不是 ASCII 字符画或 Mermaid。
 ---
 
 # drawio-diagrams
