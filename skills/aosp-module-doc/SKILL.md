@@ -1,15 +1,12 @@
 ---
 name: aosp-module-doc
 description: >-
-  为单个 AOSP（Android 开源项目）模块或工具产出一篇完整的技术文档——可以是编译系统、某个工具
-  （release_config、aconfig、soong、lunch），或某个框架子系统（init、SELinux、ART、binder、
-  system_server、PackageManager 等）。产出一篇结构固定的文章：概述 → 整体架构(框图) →
-  数据/概念 → 各子模块(每个配时序图/示意图) → 关键流程 → 配置与使用 → 调试工具 → 参考文档，
-  全部基于当前上游源码核实，绝不凭训练记忆臆测。当用户要「写/生成/输出 一个 AOSP 模块或工具的
-  文档/说明/分析」「讲清楚 AOSP 的 XXX 机制/模块/工具」「整理一份 XXX 的文档」「画 XXX 的
-  架构图/时序图」时使用；也会被「AOSP 源码」「Android 编译系统」「最新版本的 XXX」触发。核心价值：
-  AOSP 演进很快、训练知识容易过时（例如 release_config 已从 .scl 改为 .textproto），因此务必
-  先对照实时源码核实。
+  为单个 AOSP（Android 开源项目）模块或工具产出一篇以源码分析为主线的技术文档：编译系统、某个构建
+  工具（aconfig、soong、lunch 等），或某个框架子系统（init、SELinux、ART、binder、system_server、
+  PackageManager 等）。结构固定（概述 → 整体架构 → 数据 → 各子模块 → 关键流程 → 配置与使用 →
+  调试工具 → 参考文档），全部对照当前上游源码核实、绝不凭训练记忆。当用户要「写/生成 AOSP 模块或工具
+  的文档/分析」「讲清楚 AOSP 的 XXX 机制」「画 XXX 的架构图/时序图」，或提到「AOSP 源码」「Android
+  编译系统」「最新版本的 XXX」时触发。核心价值：AOSP 演进快、训练知识易过时，务必先对照实时源码。
 ---
 
 # AOSP 模块 / 工具文档
@@ -38,14 +35,14 @@ description: >-
    记忆填补空缺。
 2. **版本只在头部写一次。** 文章开头用一行，如 `> 本文基于 Android <version>（aosp/<branch>）。`。
    正文里**不要**到处撒 `path @ branch` 标签——不做逐句引用，不在章节正文里贴仓库路径。在行文中
-   按名字引用真实的文件/类型/函数（例如“在 `release_config.go` 的 `GenerateReleaseConfig()` 里”）
-   是正常且鼓励的；贴完整 gitiles 路径则是噪音。
+   按名字引用真实的文件/类型/函数（如“在 `<某文件>.go` 的 `<某函数>()` 里”）是正常且鼓励的；
+   贴完整 gitiles 路径则是噪音。
 3. **结合源码讲解，多贴关键源码。** 讲一个机制/结构/字段时，先摆出真实源码片段，再针对它说明，
    不要脱离代码空谈。要**深入实现**：不止贴 schema/proto，更要贴关键的实现代码——核心函数体、
    结构体、关键算法分支、真实配置文件。宁可多贴几段关键源码，让读者直接看到“机制是怎么实现的”。
    但**切记只贴关键片段，不要整文件倾倒**——挑承载机制的那几行，长函数只摘要害。
    **每个代码段顶部加一行注释标明出处**（文件路径，必要时带函数名），注释用该语言的语法：Go / proto
-   用 `//`，textproto / make / shell 用 `#`。例如 `// build/soong/cmd/release_config/release_config_lib/release_config.go — GenerateReleaseConfig()`。
+   用 `//`，textproto / make / shell 用 `#`。例如 `// <项目>/<路径>/<文件> — <函数或片段>`。
    （这是正文里展示源码位置的唯一渠道；版本仍只在头部写，不在别处贴 `@ branch`。）引用精确到名字，
    片段来自 gitiles。
 4. **先读再猜路径。** 先浏览目录列表；404 通常意味着路径和记忆不符——重新核对，别再猜。
@@ -193,8 +190,8 @@ description: >-
    然后**检索支撑材料**——`source.android.com` 上的官方文档和靠谱的博客/分享——把能提升文章的内容
    拉进来（命名规则、怎么消费它、设计动因、历史），每一点都对照源码核实。记下你实际用到的参考，供
    `参考文档` 用。
-   > 路径映射坑：gitiles 项目 `platform/build` → 源码树 `build/make/`；`platform/build/release` →
-   > `build/release/`；`platform/build/soong` → `build/soong/`。404 通常意味着项目/路径错了——回去
+   > 路径映射坑：gitiles 项目名和源码树路径常常不一致，例如项目 `platform/build` → 源码树
+   > `build/make/`，`platform/build/soong` → `build/soong/`。404 通常意味着项目/路径错了——回去
    > 重新核对列表。
 3. **结构 + 图一起规划，** 然后按风格规则用连贯行文写文章。
 4. **生成各图**（架构、各子模块、关键流程）用 `drawio-diagrams`；内嵌并配说明。
@@ -231,8 +228,8 @@ id。图片是相对引用的，所以把 `.html` 和 `.png` 放在一起。
 - **文件历史（某处何时改的）：** `.../platform/<project>/+log/refs/heads/main/<path>`
 - **项目索引：** `https://android.googlesource.com/`
 
-常见项目：`platform/build`（→`build/make/`）、`platform/build/release`、`platform/build/soong`、
-`platform/frameworks/base`、`platform/system/core`。
+常见项目：`platform/build`（→`build/make/`）、`platform/build/soong`、`platform/frameworks/base`、
+`platform/system/core`。
 
 **不要抓 `cs.android.com`**——它是 JS 单页应用，WebFetch 只会拿到空壳。请走 gitiles 读取。WebFetch
 的摘要模型可能截断长文件——分段抓，或用 `?format=TEXT`。
@@ -258,5 +255,5 @@ id。图片是相对引用的，所以把 `.html` 和 `.png` 放在一起。
 - [ ] 架构框图的方框与子模块小节 1:1 对应，标签有信息量。
 - [ ] 每个子模块都有一张时序图或框图；关键流程有它自己的时序图。
 - [ ] 调试工具章节具体、可直接照着跑。
-- [ ] 没有 `.scl` 时代 / `Android.mk` 时代（或其它过时）的假设残留；每个机制都读自当前源码。未核实的
-      部分要么略去，要么用 `（未核实）` 标注一次。
+- [ ] 没有过时假设残留（旧格式、旧目录、旧工具位置等）；每个机制都读自当前源码。未核实的部分
+      要么略去，要么用 `（未核实）` 标注一次。
