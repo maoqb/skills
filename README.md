@@ -10,6 +10,7 @@ In Claude Code:
 ```
 /plugin marketplace add maoqb/skills
 /plugin install drawio-diagrams@maoqb-skills
+/plugin install aosp-module-doc@maoqb-skills
 ```
 
 The first command registers this repo as a marketplace; the second installs a
@@ -42,6 +43,24 @@ Claude to "draw a flowchart / sequence diagram / architecture diagram", "画个�
 (`brew install --cask drawio` on macOS). The `.drawio` file itself opens in
 draw.io desktop or <https://app.diagrams.net> with no install.
 
+### aosp-module-doc
+
+Generate a complete technical document for **one AOSP module or tool** — the
+build system, a tool like `release_config` / `aconfig` / Soong, or a framework
+subsystem like `init` / binder / `system_server`. Every factual claim is verified
+against **current upstream source** (read live from `android.googlesource.com`),
+not training memory, so the output tracks the latest AOSP instead of going stale.
+
+The article follows a fixed structure — 概述 → 整体架构 → 数据/概念 → 各子模块 →
+关键流程 → 配置与使用 → 调试工具 → 参考文档 — with numbered headings, a table of
+contents, and embedded draw.io diagrams (an architecture 框图 plus per-submodule
+时序图/示意图, produced via the `drawio-diagrams` skill). It also searches the
+official docs and absorbs what improves the article. Trigger it with "写/生成 AOSP
+XXX 模块/工具的文档", "讲清楚 AOSP 的 XXX 机制", etc.
+
+The skill bundles `scripts/md2html.py`, a zero-dependency converter that renders
+the Markdown to a styled standalone HTML with a clickable, auto-generated TOC.
+
 ## Layout
 
 ```
@@ -49,10 +68,13 @@ draw.io desktop or <https://app.diagrams.net> with no install.
 ├── .claude-plugin/
 │   └── marketplace.json     # marketplace + plugin definitions
 └── skills/
-    └── drawio-diagrams/
+    ├── drawio-diagrams/
+    │   ├── SKILL.md
+    │   ├── scripts/
+    │   └── references/
+    └── aosp-module-doc/
         ├── SKILL.md
-        ├── scripts/
-        └── references/
+        └── scripts/
 ```
 
 ## License

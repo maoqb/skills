@@ -17,6 +17,15 @@
       "skills": [
         "./skills/drawio-diagrams"
       ]
+    },
+    {
+      "name": "aosp-module-doc",
+      "description": "Generate a complete, source-grounded technical document for one AOSP module or tool (build system, release_config, aconfig, Soong, init, binder, …): 概述/整体架构/子模块/关键流程/调试工具/参考文档, with embedded draw.io diagrams, verified against current AOSP source rather than training memory. Optional standalone HTML export.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/aosp-module-doc"
+      ]
     }
   ]
 }
