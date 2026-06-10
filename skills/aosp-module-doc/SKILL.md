@@ -245,6 +245,21 @@ grep -r "FuncName" <aosp_root>/<path>/ --include="*.go" -l
 
 本地读取没有网络延迟，也不受 gitiles 截断限制，优先使用。
 
+**`repo` 检出常是部分同步的，需要的路径不存在时——只同步用到的那几个 project，绝不整树
+`repo sync`。** 磁盘空间通常有限，拉无关仓库会把磁盘撑爆。做法：
+
+```bash
+# 1. 在 manifest 里查 project 路径（repo 可能不在 PATH 上，常见于 ~/bin/repo）
+grep 'path="<dir>"' <aosp_root>/.repo/manifests/default.xml
+# 2. 只同步这几个，例如 release_config 相关的三个：
+cd <aosp_root> && ~/bin/repo sync -c -j4 build/soong build/make build/release
+# 3. 确认路径已存在，再基于它分析
+```
+
+`-c` = 只当前分支；末尾出现 `repo sync has finished successfully` 即成功，途中
+`Cannot copy file ... lk_inc.mk` 之类告警可忽略。只同步任务真正用到的 project，别超出所需。
+（本机的一份检出在 `/Users/qingbo/android-16.0.0_r4`，pin 在 tag `android-16.0.0_r4`。）
+
 ### gitiles 在线
 
 本地无检出时走 gitiles = `android.googlesource.com`（服务端渲染的 HTML，WebFetch 能可靠读取）：

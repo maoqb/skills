@@ -60,6 +60,12 @@ description: >-
    若需要 PNG/PDF（更高保真度），运行 `scripts/export.sh <name>.drawio png`，它会在 drawio CLI
    可用时使用 CLI，否则自动降级为 SVG。`.drawio` 文件始终保留以便在 draw.io 中编辑。
 
+   **改已有图时，`.drawio` 与导出的 `.svg`/`.png` 必须一起改、保持同步。** 二者成对存在（同名
+   不同扩展名）：文档内嵌的是导出件，可编辑源是 `.drawio`，漂移会让图与正文/源对不上。最稳的做法
+   是改构建脚本后重新 `save()` + `save_svg()` 一次性重出两者；若只手改了 `.svg`，务必把 `.drawio`
+   也同步到一致（节点坐标/标签对齐），使日后从 `.drawio` 重新导出能复现该 `.svg`。改完渲染一眼
+   确认（`rsvg-convert -w 1200 <name>.svg -o /tmp/p.png` 再 Read，或 `qlmanage -t -s 990 -o /tmp <name>.svg`）。
+
 6. **告诉用户**各文件路径：`.drawio` 可在 draw.io / app.diagrams.net 中编辑，`.svg` 已可在
    markdown/HTML 中直接显示。
 
