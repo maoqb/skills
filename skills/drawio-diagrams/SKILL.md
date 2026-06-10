@@ -94,9 +94,12 @@ sys.path.insert(0, os.path.join(SKILL, "scripts"))
 1. **文字不能超出方框**：`BlockDiagram.block()` 会按标签行数自动算高度，但**宽度**仍需
    自己核对——超长的单行标识符（如 `inheritance_graph-<product>.dot`）要显式传 `w=`
    留够空间。
-2. **同类元素用框中框**：一个方框如果概念上包含多个并列子项（例如某目录下的多种文件类型），
-   不要塞进一个标签里——用 `BlockDiagram.child_block(parent_id, label, rel_x, rel_y, w, h,
-   color=...)` 在父框内画出多个小方框，父框传 `title_top=True` 把标题置顶、给子框留空间。
+2. **包含多个子项的方框用框中框，不要用括号罗列**：一个方框如果概念上含多个并列子项——
+   某目录下的多种文件类型，或**一个组件的多项功能/职责**（如 `release_config_lib` 的
+   并发加载 / 继承解析 / 产物生成）——**绝不要把它们塞进标签的括号里**（如
+   `组件名（A + B + C）`）。改成框中框：父框只放组件名、`title_top=True` 把标题置顶，每个子项
+   用 `BlockDiagram.child_block(parent_id, label, rel_x, rel_y, w, h, color=...)` 画成父框内
+   的一个小方框（多个子框横向并排）。这样整张图更简洁、子项一目了然，也便于连线指到具体子项。
 3. **箭头可以是折线**：`connect()` 支持 `waypoints=[(x,y), ...]`，让连线绕开其他方框、
    避免多条箭头挤在一起重叠。多条折线如果同向绕路，分配不同的 x/y 通道（例如分别走
    `x=30` 和 `x=100`），不要共用同一条通道。
