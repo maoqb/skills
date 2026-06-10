@@ -5,9 +5,12 @@
 
 ## 模型
 
-- `block(label, col, row, color=...)` 在网格上放一个带标签的方框，返回它的 id。
+- `block(label, col, row, color=..., subtitle=None)` 在网格上放一个带标签的方框，返回它的 id。
   高度会按 `label` 的行数**自动计算**（每行 ~20px + 16px 留白），文字不会溢出方框；
   超长的单行文字（尤其是英文标识符）请显式传 `w=` 留够宽度。
+  `subtitle="…"` 会在主名下面渲染一行**小灰字副标题**（9px / `#666`，自动不带括号）——
+  用来补一句职责/出处/格式，而不是把它塞进 `label` 的括号里。`label` 保持单行短名；副标题
+  里若出现「A + B + C」这种并列，改用 `child_block` 框中框。
 - `child_block(parent_id, label, rel_x, rel_y, w, h, color=...)` 在父方框内部、相对
   父方框左上角偏移 `(rel_x, rel_y)` 处放一个小方框——用来表示“父方框包含多个同类元素”
   （框中框）。父方框建议传 `title_top=True`，让父方框的标题显示在顶部而不是居中，
@@ -66,6 +69,20 @@ bd.child_block(container, "release_configs/",   rel_x=264, rel_y=38, w=130, h=34
 
 `child_block` 用绝对坐标定位（父框左上角 + `rel_x/rel_y`），子框宽度之和 + 间距需要小于
 父框宽度，否则会溢出父框边界——和普通 `block()` 一样需要自己核对尺寸。
+
+## 副标题（角色/出处提示，别用括号）
+
+补一句职责/出处/格式时，用 `subtitle=` 而不是在标签里写 `名字（说明）`：
+
+```python
+bd.block("release_config.mk",        x=40,  y=40, w=240, color="yellow",
+         subtitle="合并 map 列表 → maps_list")
+bd.block("PRODUCT_RELEASE_CONFIG_MAPS", x=340, y=40, w=240, color="blue",
+         subtitle="env var / soong_ui 输出")
+```
+
+主名保持单行短名，副标题是更小的灰字、自动不带括号。`title_top=True` 的容器框也能带
+`subtitle`（标题加粗、副标题紧随其下）。副标题里若要并列多个子项，改用 `child_block`。
 
 ## 折线箭头（避免连线重叠）
 

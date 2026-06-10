@@ -160,10 +160,12 @@ class Diagram:
         self._auto += 1
         return f"{prefix}{self._auto}"
 
-    def add_vertex(self, value, x, y, w, h, style, cid=None, parent="1") -> str:
+    def add_vertex(self, value, x, y, w, h, style, cid=None, parent="1",
+                   escape=True) -> str:
         cid = cid or self._next_id("n")
+        val = _esc(value) if escape else value
         self.cells.append(
-            f'        <mxCell id="{cid}" value="{_esc(value)}" style="{style}" '
+            f'        <mxCell id="{cid}" value="{val}" style="{style}" '
             f'vertex="1" parent="{parent}">\n'
             f'          <mxGeometry x="{x}" y="{y}" width="{w}" height="{h}" '
             f'as="geometry" />\n'
@@ -580,13 +582,18 @@ class BlockDiagram:
         self._groups: list[tuple] = []         # (label, members, pad)
         self._pending_groups: list[tuple] = []
         self._title_top: set = set()           # cids whose label renders at top (containers)
+        self._subtitles: dict[str, str] = {}   # cid -> short grey subtitle (optional)
 
     def block(self, label, col=0, row=0, x=None, y=None, w=None, h=None,
-              color="blue", rounded=True, title_top=False) -> str:
+              color="blue", rounded=True, title_top=False, subtitle=None) -> str:
+        """Add a block. `subtitle` renders as a short, smaller grey second line
+        (no parentheses) for a role/source/format hint — keep the main `label`
+        a single short line. For multiple parallel sub-items use child_block()
+        instead of cramming them into label/subtitle."""
         w = w or self.W
         if h is None:
             # auto-size height so text never overflows: 20px per line + 16px padding
-            n_lines = label.count("\n") + 1
+            n_lines = label.count("\n") + 1 + (1 if subtitle else 0)
             h = max(self.H, n_lines * 20 + 16)
         if x is None:
             x = self.MARGIN + col * self.COL_W
@@ -596,10 +603,21 @@ class BlockDiagram:
                  + _FILL.get(color, _FILL["blue"]))
         if title_top:
             style += "verticalAlign=top;"
-        cid = self.d.add_vertex(label, x, y, w, h, style)
+        if subtitle:
+            # HTML label: name on line 1, smaller grey subtitle on line 2 (no parens).
+            name_html = (f"<b>{_esc(label)}</b>" if title_top else _esc(label))
+            val = (name_html + "&lt;br&gt;&lt;font style=&quot;font-size:9px&quot; "
+                   "color=&quot;#666666&quot;&gt;" + _esc(subtitle) + "&lt;/font&gt;")
+            # name_html already contains real <b> tags for bold; convert them too.
+            val = val.replace("<b>", "&lt;b&gt;").replace("</b>", "&lt;/b&gt;")
+            cid = self.d.add_vertex(val, x, y, w, h, style, escape=False)
+        else:
+            cid = self.d.add_vertex(label, x, y, w, h, style)
         self._pos[cid] = (x, y, w, h)
         self._labels[cid] = label
         self._colors[cid] = color
+        if subtitle:
+            self._subtitles[cid] = subtitle
         if title_top:
             self._title_top.add(cid)
         return cid
@@ -748,12 +766,30 @@ class BlockDiagram:
             parts.append(
                 f'<rect x="{x}" y="{y}" width="{w}" height="{h}" '
                 f'fill="{fc}" stroke="{sc}" stroke-width="1.5" rx="4"/>')
+            sub = self._subtitles.get(cid)
+            cx = x + w / 2
             if cid in self._title_top:
                 # container block: label at top, not centred
-                parts.append(_svg_text(x + w / 2, y + 4, label, anchor="middle",
-                                       fontsize=11, box_h=None))
+                parts.append(_svg_text(cx, y + 4, label, anchor="middle",
+                                       fontsize=11, bold=bool(sub), box_h=None))
+                if sub:
+                    parts.append(
+                        f'<text x="{cx}" y="{y + 30:.1f}" text-anchor="middle" '
+                        f'font-family="Arial,Helvetica,sans-serif" font-size="9" '
+                        f'fill="#666666">{_svg_esc(sub)}</text>')
+            elif sub:
+                # name + smaller grey subtitle, vertically centred as a pair
+                cy = y + h / 2
+                parts.append(
+                    f'<text x="{cx}" y="{cy - 2:.1f}" text-anchor="middle" '
+                    f'font-family="Arial,Helvetica,sans-serif" font-size="11" '
+                    f'fill="#000000">{_svg_esc(label)}</text>')
+                parts.append(
+                    f'<text x="{cx}" y="{cy + 13:.1f}" text-anchor="middle" '
+                    f'font-family="Arial,Helvetica,sans-serif" font-size="9" '
+                    f'fill="#666666">{_svg_esc(sub)}</text>')
             else:
-                parts.append(_svg_text(x + w / 2, y, label, anchor="middle",
+                parts.append(_svg_text(cx, y, label, anchor="middle",
                                        fontsize=11, box_h=h))
 
         parts.append('</svg>')
