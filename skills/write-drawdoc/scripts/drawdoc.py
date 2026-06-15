@@ -14,6 +14,7 @@ Building blocks
   doc.md("# Title\n\nProse with **bold**, tables, lists, `code` …")
   doc.drawio(xml_or_path_or_builder, width=600, align="center")
   doc.excalidraw(scene_or_path_or_dict, align="center")     # whiteboard
+  doc.mermaid("graph TD\n A-->B", align="center")           # text diagram
   doc.image("logo.png", alt="Logo", width=420)              # inlined by default
   doc.save("my-doc.drawdoc")
 
@@ -25,6 +26,11 @@ On-disk format produced
 
   ```excalidraw
   {"type":"excalidraw","elements":[ … ]}
+  ```
+
+  ```mermaid                              <- bare fence: GitHub renders it natively
+  graph TD
+    A[Start] --> B{Choice}
   ```
 
   ![Logo](data:image/png;base64,…  "w=420")  <- width lives in the title slot
@@ -105,6 +111,19 @@ def _scene_json(src: Any) -> str:
     scene.setdefault("appState", {})
     scene.setdefault("files", {})
     return json.dumps(scene, ensure_ascii=False)
+
+
+# --------------------------------------------------------------------------- #
+# mermaid source -> mermaid text
+# --------------------------------------------------------------------------- #
+def _mermaid_text(src: Any) -> str:
+    if not isinstance(src, str):
+        raise TypeError(f"unsupported mermaid source: {type(src).__name__}")
+    # a path to a .mmd / .mermaid file, otherwise the mermaid text itself
+    if os.path.exists(src) and len(src) < 4096 and "\n" not in src:
+        with open(src, encoding="utf-8") as f:
+            return f.read().strip()
+    return src.strip()
 
 
 # --------------------------------------------------------------------------- #
@@ -239,6 +258,20 @@ class DrawDoc:
         self._blocks.append(f"```{_fence_info('excalidraw', width, align)}\n{data}\n```")
         return self
 
+    def mermaid(self, src: str, width: int | None = None,
+                align: str | None = None) -> "DrawDoc":
+        """Embed a Mermaid diagram. `src` is mermaid text (e.g. "graph TD\\n A-->B")
+        or a path to a .mmd/.mermaid file. With no width/align the fence stays a
+        bare ```mermaid, which GitHub renders natively; layout params turn it into a
+        plain code block on GitHub but DrawDocs still renders/edits it."""
+        text = _mermaid_text(src)
+        if not text:
+            raise ValueError("mermaid source is empty")
+        if "```" in text:
+            raise ValueError("mermaid text must not contain triple backticks")
+        self._blocks.append(f"```{_fence_info('mermaid', width, align)}\n{text}\n```")
+        return self
+
     def image(self, src: str, alt: str = "", width: int | None = None,
               embed: bool = True) -> "DrawDoc":
         """Add an image. By default a local file is inlined as a data URI so the
@@ -281,14 +314,19 @@ if __name__ == "__main__":
         ex_rect("r1", 80, 80, text="Box"),
         ex_text("t1", 80, 200, "label"),
     ))
+    doc.mermaid("graph TD\n  A[Start] --> B{Choice}\n  B -->|yes| C[Do]\n  B -->|no| D[End]",
+                align="center")
     out = doc.save("/tmp/drawdoc-selftest.drawdoc")
 
     body = open(out, encoding="utf-8").read()
     assert "```drawio width=520 align=center" in body
     assert "```excalidraw" in body
+    assert "```mermaid align=center" in body
     drawio_fences = re.findall(r"^```drawio.*?^```", body, re.S | re.M)
     excal_fences = re.findall(r"^```excalidraw.*?^```", body, re.S | re.M)
+    mermaid_fences = re.findall(r"^```mermaid.*?^```", body, re.S | re.M)
     assert len(drawio_fences) == 1 and len(excal_fences) == 1
+    assert len(mermaid_fences) == 1
     # excalidraw fence content must be valid JSON
     json.loads(excal_fences[0].split("\n", 1)[1].rsplit("\n```", 1)[0])
     print(f"OK  wrote {out}  ({len(body)} bytes)")

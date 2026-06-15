@@ -2,7 +2,7 @@
 
 `.drawdoc` is **DrawDocs' native document format — a strict superset of Markdown.**
 Open one at <https://drawdocs.vercel.app>. Everything a normal Markdown renderer
-understands stays valid; DrawDocs adds two fenced "macro" blocks and one image
+understands stays valid; DrawDocs adds three fenced "macro" blocks and one image
 convention on top.
 
 A `.drawdoc` file that contains only standard Markdown is also a perfectly valid
@@ -59,10 +59,32 @@ Use `scripts/drawdoc.py`'s `ex_rect / ex_text / ex_ellipse / ex_arrow /
 excalidraw_scene` helpers, which fill every field — hand-writing these is the
 usual source of "blank whiteboard" bugs.
 
-## 4. Layout params on the fence info line
+## 4. Mermaid diagram macro
 
-Both macro fences accept optional **width** (px) and **align** (`left`/`center`/
-`right`) right after the language, space-separated, `key=value`:
+A fenced block whose language is **`mermaid`**; its content is **Mermaid text**
+(flowchart / sequence / gantt / class …, the same syntax mermaid.js parses).
+
+````text
+```mermaid
+graph TD
+  A[Start] --> B{Choice}
+  B -->|yes| C[Do]
+  B -->|no|  D[End]
+```
+````
+
+DrawDocs renders it inline as an SVG; double-clicking opens a source editor with a
+live preview. The text must not contain a triple-backtick.
+
+A **bare** ` ```mermaid ` fence (no layout params) is **GitHub-native**: GitHub
+renders it as a diagram directly, so prefer mermaid for flowcharts/sequence
+diagrams that should look good both in DrawDocs and on GitHub. (Adding `width=` /
+`align=` makes GitHub fall back to showing it as a code block — see §5.)
+
+## 5. Layout params on the fence info line
+
+All three macro fences accept optional **width** (px) and **align** (`left`/
+`center`/`right`) right after the language, space-separated, `key=value`:
 
 ````text
 ```drawio width=600 align=center
@@ -76,10 +98,13 @@ Both macro fences accept optional **width** (px) and **align** (`left`/`center`/
 - `width` is an integer; `align` is one of `left|center|right` (`left` is the
   default and is omitted).
 - A standard Markdown renderer ignores anything after the language word, so these
-  params are GitHub-safe — they survive `.drawdoc` ⇄ plain-Markdown round-trips.
+  params survive `.drawdoc` ⇄ plain-Markdown round-trips. Note for **mermaid**:
+  adding params keeps the diagram editable in DrawDocs but makes GitHub show it as
+  a code block instead of rendering it — omit params if GitHub-native rendering
+  matters.
 - Order is always `width` then `align`. Illegal values are ignored by DrawDocs.
 
-## 5. Image width convention
+## 6. Image width convention
 
 DrawDocs stores an image's display width in the Markdown **title slot** as
 `w=<px>`:
@@ -98,7 +123,7 @@ DrawDocs stores an image's display width in the Markdown **title slot** as
 - HTML `<img src=… width=…>` is also accepted on load (DrawDocs converts it to
   this form), but emit the Markdown form above.
 
-## 6. Opening a `.drawdoc` in DrawDocs
+## 7. Opening a `.drawdoc` in DrawDocs
 
 1. **Drag-and-drop** the `.drawdoc` (or `.md`) file onto
    <https://drawdocs.vercel.app> — it opens straight into the editor. Best paired
