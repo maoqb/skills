@@ -10,6 +10,15 @@
   },
   "plugins": [
     {
+      "name": "write-drawdoc",
+      "description": "撰写 DrawDocs 原生 .drawdoc 文档（Markdown 超集：正文/表格/列表/代码 + 内嵌可编辑的 drawio 图与 Excalidraw 白板 + 带宽度的图片），产物可在 DrawDocs（drawdocs.vercel.app）里拖入直接打开继续编辑。需要把图（流程图/架构图/时序图）和正文排到一篇可编辑文档时使用。",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/write-drawdoc"
+      ]
+    },
+    {
       "name": "drawio-diagrams",
       "description": "以程序化方式生成可编辑的 draw.io（.drawio）图——框图/架构图、时序图、流程图，可选导出 PNG/SVG。",
       "source": "./",
