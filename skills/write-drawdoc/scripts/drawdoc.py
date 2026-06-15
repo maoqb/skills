@@ -29,10 +29,9 @@ On-disk format produced
 
   ![Logo](data:image/png;base64,…  "w=420")  <- width lives in the title slot
 
-Diagrams: the cleanest way to get valid mxGraph XML is the sibling
-`drawio-diagrams` skill — build a Flowchart/Sequence/BlockDiagram and pass the
-builder straight to `doc.drawio(builder)` (this script calls `.to_xml()`), or
-pass a path to a saved `.drawio` file, or raw XML.
+Diagrams: `doc.drawio()` accepts a path to a saved `.drawio` file, a raw mxGraph
+XML string, or any builder object exposing `.to_xml()` (called automatically).
+A path drawn in draw.io desktop / https://app.diagrams.net is the safest source.
 """
 from __future__ import annotations
 
@@ -65,7 +64,7 @@ def _fence_info(lang: str, width: int | None, align: str | None) -> str:
 # drawio source -> mxGraph XML string
 # --------------------------------------------------------------------------- #
 def _diagram_xml(src: Any) -> str:
-    # drawio-diagrams builders (Flowchart/Sequence/BlockDiagram/Diagram)
+    # any builder object exposing .to_xml()
     if hasattr(src, "to_xml"):
         return src.to_xml().strip()
     if hasattr(src, "d") and hasattr(src.d, "to_xml"):
@@ -221,8 +220,8 @@ class DrawDoc:
 
     def drawio(self, src: Any, width: int | None = None,
                align: str | None = None) -> "DrawDoc":
-        """Embed a draw.io diagram. `src` may be a drawio-diagrams builder, a
-        path to a .drawio file, or a raw mxGraph XML string."""
+        """Embed a draw.io diagram. `src` may be a path to a .drawio file, a raw
+        mxGraph XML string, or any builder object exposing .to_xml()."""
         xml = _diagram_xml(src)
         if "```" in xml:
             raise ValueError("drawio XML must not contain triple backticks")

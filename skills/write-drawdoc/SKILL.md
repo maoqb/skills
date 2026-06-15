@@ -20,7 +20,7 @@ Markdown 全部有效，额外多了两种可被 DrawDocs 渲染成**可编辑�
 ## 何时用
 
 - 用户要一篇**图文混排、且图要能在 DrawDocs 里继续改**的文档 → 用本技能。
-- 用户只要一张可编辑的图（不要承载文档）→ 用 `drawio-diagrams` 技能产 `.drawio` 即可。
+- 用户只要一张可编辑的图（不要承载文档）→ 直接产一个 `.drawio` 文件即可，不必用本技能。
 - 用户只要纯文字 Markdown，不涉及内嵌图/DrawDocs → 直接写 `.md`，不必用本技能。
 
 ## 工作流
@@ -28,20 +28,15 @@ Markdown 全部有效，额外多了两种可被 DrawDocs 渲染成**可编辑�
 1. **规划文档结构**：标题层级、哪里需要图、每张图是流程图/架构图/时序图还是手绘白板。
    正文语言跟随用户（中文就中文）。
 
-2. **生成图的 XML（关键一步）**。`.drawdoc` 里的 drawio 围栏需要合法的 mxGraph XML，
-   手写极易错——**用同一 marketplace 的 `drawio-diagrams` 技能**构建 Flowchart /
-   Sequence / BlockDiagram，然后把构建器对象**直接传给** `doc.drawio(builder)`
-   （本脚本会调用它的 `.to_xml()`）。也可以传一个已保存的 `.drawio` 文件路径或原始 XML。
+2. **准备图的 XML（关键一步）**。`.drawdoc` 里的 drawio 围栏需要合法的 mxGraph
+   XML（`<mxfile>…</mxfile>`）。`doc.drawio(src, …)` 接受三种 `src`：
 
-   ```python
-   import sys
-   sys.path.insert(0, "<drawio-diagrams skill>/scripts")  # 若已装 drawio-diagrams
-   from drawio import BlockDiagram
-   bd = BlockDiagram("架构")
-   a = bd.block("Client", col=0, color="blue")
-   b = bd.block("API",    col=1, color="green")
-   bd.connect(a, b, "HTTP")
-   ```
+   - 一个已保存的 `.drawio` 文件路径——用 draw.io 桌面版或 <https://app.diagrams.net>
+     画好后传路径，最稳；
+   - 原始 mxGraph XML 字符串（以 `<` 开头）；
+   - 任意暴露 `.to_xml()` 方法的构建器对象（脚本会自动调用它）。
+
+   手写 XML 极易错，优先传已画好的 `.drawio` 路径。
 
 3. **组装 `.drawdoc`**。用 `scripts/drawdoc.py` 的 `DrawDoc` 按顺序追加块：
 
@@ -52,7 +47,7 @@ Markdown 全部有效，额外多了两种可被 DrawDocs 渲染成**可编辑�
 
    doc = DrawDoc()
    doc.md("# 部署架构\n\n服务整体如下图，**双击图可在 DrawDocs 内编辑**：")
-   doc.drawio(bd, width=600, align="center")          # 传 drawio-diagrams 构建器
+   doc.drawio("架构.drawio", width=600, align="center")  # .drawio 路径 / 原始 XML
    doc.md("## 数据流\n\n| 阶段 | 说明 |\n|---|---|\n| 入站 | … |")
    doc.excalidraw(excalidraw_scene(                    # 可选：手绘风白板
        ex_rect("r1", 80, 80, text="想法"),
@@ -90,15 +85,13 @@ Markdown 全部有效，额外多了两种可被 DrawDocs 渲染成**可编辑�
 
 - 一张图配一句引导（「下图为…」「双击可编辑」），不要图突兀地插在段落中间。
 - 图用 `width` + `align=center` 居中、控制大小；正文宽图用 `width=600~760`。
-- 标签短、跟随用户语言；复杂图的质量约束沿用 `drawio-diagrams` 技能的指引
-  （文字不溢出方框、并列子项用框中框等）。
+- 标签短、跟随用户语言；复杂图注意质量（文字不溢出方框、并列子项用框中框、连线尽量不交叉等）。
 - 凡是「可编辑的图」一律走 drawio / excalidraw 围栏，**不要**把图导成 PNG 再 `![]()`——
   那样在 DrawDocs 里就只是张死图、不能改了。
 
 ## 关于 skill 路径
 
-把 `<write-drawdoc skill>` 替换为本 SKILL.md 所在目录；`<drawio-diagrams skill>` 替换为
-已安装的 drawio-diagrams 技能目录。脚本里稳妥的写法：
+把 `<write-drawdoc skill>` 替换为本 SKILL.md 所在目录。脚本里稳妥的写法：
 
 ```python
 import os, sys

@@ -33,7 +33,7 @@ Markdown 的严格超集：普通 Markdown（标题/表格/列表/代码）照�
 
 产物拖进 <https://drawdocs.vercel.app> 即可打开继续编辑（图块双击进对应编辑器改），也可用
 DrawDocs 的本地文件夹 / GitHub 模式打开。技能内置 `scripts/drawdoc.py` 组装器（按顺序追加
-正文 / 图 / 白板 / 图片块并写出 `.drawdoc`），生成图的 XML 直接复用 `drawio-diagrams` 的构建器。
+正文 / 图 / 白板 / 图片块并写出 `.drawdoc`）；drawio 围栏接受 `.drawio` 路径或原始 mxGraph XML。
 用「写一篇 .drawdoc」「生成能在 DrawDocs 里改的图文文档」等触发。
 
 ## Layout
