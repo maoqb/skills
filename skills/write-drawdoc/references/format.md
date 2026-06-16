@@ -1,9 +1,16 @@
 # The `.drawdoc` format
 
-`.drawdoc` is **DrawDocs' native document format — a strict superset of Markdown.**
+`.drawdoc` is **DrawDocs' native document format — a Markdown superset.**
 Open one at <https://drawdocs.vercel.app>. Everything a normal Markdown renderer
-understands stays valid; DrawDocs adds three fenced "macro" blocks and one image
-convention on top.
+understands stays valid; DrawDocs adds a handful of fenced "macro" blocks
+(drawio, excalidraw, mermaid, mindmap), a live table-of-contents block, and one
+image-width convention on top.
+
+> Note: `.drawdoc` is a Markdown **superset**, not strictly GFM. For richer
+> features (table column widths / row heights, text colour, cell shading, etc.)
+> DrawDocs may persist HTML `<table>`/`<p style>` blocks — GitHub still renders
+> them. You don't need to emit those by hand; plain GFM tables and prose are
+> enough, and DrawDocs upgrades them on edit. "Capability over Markdown purity."
 
 A `.drawdoc` file that contains only standard Markdown is also a perfectly valid
 `.md` file. The extra syntax below is what makes it a `.drawdoc`.
@@ -61,30 +68,74 @@ usual source of "blank whiteboard" bugs.
 
 ## 4. Mermaid diagram macro
 
-A fenced block whose language is **`mermaid`**; its content is **Mermaid text**
-(flowchart / sequence / gantt / class …, the same syntax mermaid.js parses).
+A fenced block whose language is **`mermaid`**; its content is Mermaid text
+(`graph TD …`, `sequenceDiagram …`, `gantt …`, `classDiagram …`, etc.).
 
 ````text
 ```mermaid
 graph TD
-  A[Start] --> B{Choice}
-  B -->|yes| C[Do]
-  B -->|no|  D[End]
+  A[开始] --> B{判断}
+  B -->|是| C[执行]
+  B -->|否| D[结束]
 ```
 ````
 
-DrawDocs renders it inline as an SVG; double-clicking opens a source editor with a
-live preview. The text must not contain a triple-backtick.
+DrawDocs renders it inline as an SVG; double-clicking opens a text editor with a
+live preview. A **bare** ` ```mermaid ` fence (no layout params) is GitHub-native
+— GitHub renders the same diagram. Setting `width`/`align` (see §6) degrades it to
+a plain code block outside DrawDocs, so prefer bare fences unless you need sizing.
+Use `doc.mermaid(code, …)`.
 
-A **bare** ` ```mermaid ` fence (no layout params) is **GitHub-native**: GitHub
-renders it as a diagram directly, so prefer mermaid for flowcharts/sequence
-diagrams that should look good both in DrawDocs and on GitHub. (Adding `width=` /
-`align=` makes GitHub fall back to showing it as a code block — see §5.)
+## 5. Mindmap macro (interactive, mind-elixir)
 
-## 5. Layout params on the fence info line
+A fenced block whose language is **`mindmap`**; its content is mind-elixir data
+JSON: `{"nodeData": <tree>, …}`, where every node is
+`{"id": <unique>, "topic": <text>, "children": [ … ]}`.
 
-All three macro fences accept optional **width** (px) and **align** (`left`/
-`center`/`right`) right after the language, space-separated, `key=value`:
+````text
+```mindmap
+{"nodeData":{"id":"root","topic":"中心主题","children":[
+  {"id":"b1","topic":"分支一"},
+  {"id":"b2","topic":"分支二","children":[{"id":"b2a","topic":"子项"}]}
+]}}
+```
+````
+
+DrawDocs renders it inline as an SVG; double-clicking opens an interactive canvas
+(drag nodes, Tab = child, Enter = sibling, double-click a node to rename). Build
+the JSON with `scripts/drawdoc.py`'s `mindmap_data(...)` / `mind_node(...)` helpers
+(they assign unique ids); pass the result to `doc.mindmap(...)`. Not GitHub-native
+(GitHub shows it as a JSON code block), but it round-trips and renders in DrawDocs
+and on export.
+
+## 6. Live table of contents
+
+A **doctoc**-style block — `<!-- toc -->` … `<!-- /toc -->` wrapping a Markdown
+anchor list — that DrawDocs treats as a *live* TOC node: it regenerates the list
+from the document's headings on open and keeps it in sync as headings change.
+
+````text
+<!-- toc -->
+
+- [安装](#安装)
+  - [依赖](#依赖)
+- [使用](#使用)
+
+<!-- /toc -->
+````
+
+The anchor list between the markers is what GitHub renders (and DrawDocs discards
++ regenerates), so precomputing it makes the doc useful everywhere. Anchors follow
+GitHub slug rules (lowercase, strip punctuation, spaces→hyphens, keep CJK/`_`,
+`-1`/`-2` on duplicates). `doc.toc()` emits this block and computes the anchors
+from every heading in the document automatically. An **unclosed** `<!-- toc -->`
+(no `<!-- /toc -->`) is *not* recognised — it stays as plain text.
+
+## 7. Layout params on the fence info line
+
+The macro fences (`drawio`, `excalidraw`, `mermaid`, `mindmap`) accept optional
+**width** (px) and **align** (`left`/`center`/`right`) right after the language,
+space-separated, `key=value`:
 
 ````text
 ```drawio width=600 align=center
@@ -104,7 +155,7 @@ All three macro fences accept optional **width** (px) and **align** (`left`/
   matters.
 - Order is always `width` then `align`. Illegal values are ignored by DrawDocs.
 
-## 6. Image width convention
+## 8. Image width convention
 
 DrawDocs stores an image's display width in the Markdown **title slot** as
 `w=<px>`:
@@ -123,7 +174,7 @@ DrawDocs stores an image's display width in the Markdown **title slot** as
 - HTML `<img src=… width=…>` is also accepted on load (DrawDocs converts it to
   this form), but emit the Markdown form above.
 
-## 7. Opening a `.drawdoc` in DrawDocs
+## 9. Opening a `.drawdoc` in DrawDocs
 
 1. **Drag-and-drop** the `.drawdoc` (or `.md`) file onto
    <https://drawdocs.vercel.app> — it opens straight into the editor. Best paired
