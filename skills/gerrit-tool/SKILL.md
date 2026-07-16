@@ -1,5 +1,5 @@
 ---
-name: gerrit
+name: gerrit-tool
 description: >-
   在 AOSP（repo 管理的多仓库）工作区里操作 Gerrit：把同一个 topic 下的所有 change
   按依赖顺序 cherry-pick 到各自对应的项目目录——自动查询 topic、自动把 project 映射到
@@ -8,7 +8,7 @@ description: >-
   的所有 change 到本地」时使用；单个 change 的摘取也适用。
 ---
 
-# gerrit
+# gerrit-tool
 
 核心是 `scripts/gerrit_topic_pick.py`（纯 python3 标准库，无第三方依赖），
 在 repo 工作区内任意目录运行即可。
