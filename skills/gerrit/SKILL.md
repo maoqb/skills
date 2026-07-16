@@ -15,18 +15,20 @@ description: >-
 
 ## 前置条件
 
-- 当前目录在一个 **repo 工作区**内（向上能找到 `.repo/`），`repo`、`git` 在 PATH 里。
+- 当前目录在一个 **repo 工作区**内（向上能找到 `.repo/`），`repo`、`git`、`ssh` 在 PATH 里。
 - **Gerrit 地址**按此顺序确定：`--gerrit` 参数 → `GERRIT_URL` 环境变量 → manifest 里
   remote 的 `review="..."` 属性（脚本自动解析 `repo manifest -o -`）。公司内部 Gerrit
-  一般 manifest 里就有，不用手动传。
-- **认证**：Gerrit 匿名可读则无需配置；否则在 `~/.netrc` 加一行 HTTP 凭据
-  （密码在 Gerrit 网页 Settings → HTTP Credentials 生成，不是登录密码）：
+  一般 manifest 里就有，不用手动传。接受 `host`、`user@host:port`、`ssh://` 或
+  `http(s)://` URL（只取主机名），ssh 端口默认 29418。
+- **认证**：查询走 **SSH**（`ssh -p 29418 <host> gerrit query`），用的就是平时
+  `repo sync` / 提交代码的那把 ssh key，通常不需要额外配置。可先验证连通性：
 
-  ```
-  machine <gerrit-host> login <username> password <http-password>
+  ```bash
+  ssh -p 29418 <gerrit-host> gerrit version
   ```
 
-  另外 `repo download` 走 git 协议做实际 fetch，需保证平时 `repo sync` 用的认证可用。
+  若 ssh 用户名和 Gerrit 账号不一致，在 `~/.ssh/config` 里配 `User`，或
+  `--gerrit user@host` 显式指定。
 - cherry-pick 会落在各项目**当前检出的分支**上。先确认用户各项目在正确分支上；若在
   detached HEAD，建议先 `repo start <topic-branch> --all`（或只在受影响项目上建分支）。
 
@@ -53,7 +55,7 @@ description: >-
 | 参数 | 说明 |
 | --- | --- |
 | `topic`（必填） | Gerrit topic 名 |
-| `--gerrit URL` | Gerrit 地址，如 `https://gerrit.example.com` |
+| `--gerrit HOST` | Gerrit 地址：`host` / `user@host:port` / `ssh://` / `http(s)://` |
 | `--status open\|merged\|any` | 按状态过滤，默认 `open` |
 | `--branch BRANCH` | 只摘取目标为该分支的 change（topic 跨分支复用时需要） |
 | `--dry-run` | 只打印计划不执行 |
@@ -61,9 +63,9 @@ description: >-
 
 ## 脚本行为要点
 
-- 查询：`GET /changes/?q=topic:"<topic>"+status:open&o=CURRENT_REVISION&o=CURRENT_COMMIT`，
-  自动剥掉 Gerrit 响应前缀 `)]}'`；有 `~/.netrc` 凭据时优先走 `/a/` 认证端点。
-- 顺序：同一 relation chain 内 parent 先应用（按 current revision 的 parent commit
+- 查询：`ssh -p <port> <host> gerrit query --format=JSON --current-patch-set
+  topic:"<topic>" status:open`，逐行解析 JSON 并丢弃末尾 stats 行。
+- 顺序：同一 relation chain 内 parent 先应用（按 currentPatchSet 的 parent commit
   拓扑排序），其余按 change 编号升序。
 - project → 本地目录：解析 `repo list` 的 `path : project` 映射。
 - 幂等：应用前先 `git log --grep "Change-Id: <id>"` 检查，已存在则跳过。
@@ -73,8 +75,8 @@ description: >-
 查询 topic 下的 change：
 
 ```bash
-curl -s "https://<gerrit>/changes/?q=topic:%22<topic>%22+status:open&o=CURRENT_REVISION" \
-  | tail -n +2 | python3 -m json.tool
+ssh -p 29418 <gerrit-host> gerrit query --format=JSON --current-patch-set \
+  'topic:"<topic>"' status:open
 ```
 
 单个 change 摘取（二选一）：

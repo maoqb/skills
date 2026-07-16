@@ -2,22 +2,22 @@
 """Cherry-pick all Gerrit changes sharing a topic into an AOSP/repo workspace.
 
 Usage:
-    gerrit_topic_pick.py TOPIC [--gerrit URL] [--status open|merged|any]
+    gerrit_topic_pick.py TOPIC [--gerrit HOST] [--status open|merged|any]
                                [--branch BRANCH] [--dry-run] [--continue-on-fail]
 
 Requirements:
     - python3 (stdlib only)
     - run anywhere inside a `repo` workspace (a `.repo/` ancestor must exist)
-    - `repo` and `git` in PATH
+    - `repo`, `git`, `ssh` in PATH
 
-Gerrit base URL resolution order: --gerrit flag > GERRIT_URL env var >
-first `review="..."` attribute found in `repo manifest -o -`.
+Queries Gerrit over SSH (`ssh -p 29418 <host> gerrit query --format=JSON`),
+so it only needs the same ssh key / account that `repo sync` already uses.
+Verify access with: ssh -p 29418 <host> gerrit version
 
-Auth: tries authenticated `/a/` endpoint if ~/.netrc has an entry for the
-Gerrit host (generate the password at Gerrit web UI: Settings > HTTP
-Credentials), otherwise falls back to anonymous access:
-
-    machine <gerrit-host> login <username> password <http-password>
+Gerrit host resolution order: --gerrit flag > GERRIT_URL env var > first
+`review="..."` attribute found in `repo manifest -o -`. Accepted forms:
+`host`, `user@host:port`, `ssh://user@host:29418`, or an http(s) URL
+(only the hostname is used; ssh port defaults to 29418).
 
 The script is idempotent: changes whose Change-Id already appears in the
 target project's history are skipped, so after resolving a conflict
@@ -25,16 +25,15 @@ target project's history are skipped, so after resolving a conflict
 """
 
 import argparse
-import base64
 import json
-import netrc
 import os
 import re
 import subprocess
 import sys
-import urllib.error
 import urllib.parse
-import urllib.request
+
+
+DEFAULT_SSH_PORT = 29418
 
 
 def die(msg, code=1):
@@ -62,51 +61,86 @@ def detect_gerrit(root):
     except (OSError, subprocess.CalledProcessError):
         return None
     m = re.search(r'review="([^"]+)"', out)
+    return m.group(1) if m else None
+
+
+def parse_ssh_target(s):
+    """Normalize host / user@host:port / ssh:// / http(s):// into (dest, port)."""
+    s = s.strip().rstrip("/")
+    if "://" in s:
+        u = urllib.parse.urlparse(s)
+        if not u.hostname:
+            die(f"cannot parse Gerrit target {s!r}")
+        dest = (u.username + "@" if u.username else "") + u.hostname
+        port = u.port if (u.scheme == "ssh" and u.port) else DEFAULT_SSH_PORT
+        return dest, port
+    m = re.match(r"^(?:(?P<user>[^@/]+)@)?(?P<host>[^:/]+)(?::(?P<port>\d+))?$", s)
     if not m:
-        return None
-    url = m.group(1)
-    if not url.startswith("http://") and not url.startswith("https://"):
-        url = "https://" + url
-    return url.rstrip("/")
+        die(f"cannot parse Gerrit target {s!r}")
+    dest = (m.group("user") + "@" if m.group("user") else "") + m.group("host")
+    return dest, int(m.group("port") or DEFAULT_SSH_PORT)
 
 
-def gerrit_get(base, path):
-    host = urllib.parse.urlparse(base).hostname
-    auth = None
-    try:
-        auth = netrc.netrc().authenticators(host)
-    except (FileNotFoundError, netrc.NetrcParseError):
-        pass
-
-    prefixes = (["/a", ""] if auth else [""])
-    last_err = None
-    for prefix in prefixes:
-        req = urllib.request.Request(base + prefix + path)
-        if prefix == "/a":
-            token = base64.b64encode(f"{auth[0]}:{auth[2]}".encode()).decode()
-            req.add_header("Authorization", "Basic " + token)
-        try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                body = resp.read().decode()
-            if body.startswith(")]}'"):
-                body = body.split("\n", 1)[1]
-            return json.loads(body)
-        except urllib.error.HTTPError as e:
-            last_err = e
-        except urllib.error.URLError as e:
-            die(f"cannot reach {base}: {e.reason}")
-    die(f"gerrit query failed: {last_err}")
+def ssh_query(dest, port, terms):
+    cmd = ["ssh", "-p", str(port), dest,
+           "gerrit", "query", "--format=JSON", "--current-patch-set"] + terms
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode != 0:
+        die(f"ssh gerrit query failed ({' '.join(cmd)}):\n{r.stderr.strip()}")
+    changes = []
+    for line in r.stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        obj = json.loads(line)
+        if obj.get("type") == "stats":
+            continue
+        changes.append(normalize(obj))
+    return changes
 
 
-def query_changes(base, topic, status, branch):
-    q = f'topic:"{topic}"'
-    if status != "any":
-        q += f" status:{status}"
-    if branch:
-        q += f' branch:"{branch}"'
-    path = ("/changes/?q=" + urllib.parse.quote(q)
-            + "&o=CURRENT_REVISION&o=CURRENT_COMMIT&n=500")
-    return gerrit_get(base, path)
+def normalize(raw):
+    ps = raw.get("currentPatchSet")
+    if not ps:
+        die(f"change {raw.get('number')} has no currentPatchSet in query output")
+    return {
+        "number": int(raw["number"]),
+        "patchset": int(ps["number"]),
+        "revision": ps["revision"],
+        "parents": ps.get("parents", []),
+        "project": raw["project"],
+        "subject": raw.get("subject", ""),
+        "change_id": raw["id"],
+        "status": raw.get("status", ""),
+    }
+
+
+def order_changes(changes):
+    """Topological order: within a relation chain, parents first.
+
+    A change depends on another if that other change's current revision is a
+    parent commit of this change's current patch set. Ties break by ascending
+    change number.
+    """
+    by_rev = {c["revision"]: c for c in changes}
+    ordered, visiting, done = [], set(), set()
+
+    def visit(c):
+        num = c["number"]
+        if num in done or num in visiting:
+            return
+        visiting.add(num)
+        for sha in c["parents"]:
+            parent = by_rev.get(sha)
+            if parent is not None:
+                visit(parent)
+        visiting.discard(num)
+        done.add(num)
+        ordered.append(c)
+
+    for c in sorted(changes, key=lambda c: c["number"]):
+        visit(c)
+    return ordered
 
 
 def project_paths(root):
@@ -119,35 +153,6 @@ def project_paths(root):
             path, proj = line.split(" : ", 1)
             mapping[proj.strip()] = path.strip()
     return mapping
-
-
-def order_changes(changes):
-    """Topological order: within a relation chain, parents first.
-
-    A change depends on another if that other change's current revision is a
-    parent commit of this change's current revision. Ties break by ascending
-    change number.
-    """
-    by_rev = {c["current_revision"]: c for c in changes}
-    ordered, visiting, done = [], set(), set()
-
-    def visit(c):
-        num = c["_number"]
-        if num in done or num in visiting:
-            return
-        visiting.add(num)
-        commit = c["revisions"][c["current_revision"]]["commit"]
-        for p in commit.get("parents", []):
-            parent = by_rev.get(p["commit"])
-            if parent is not None:
-                visit(parent)
-        visiting.discard(num)
-        done.add(num)
-        ordered.append(c)
-
-    for c in sorted(changes, key=lambda c: c["_number"]):
-        visit(c)
-    return ordered
 
 
 def already_applied(root, path, change_id):
@@ -163,7 +168,8 @@ def main():
     ap = argparse.ArgumentParser(
         description="Cherry-pick all Gerrit changes of a topic into a repo workspace.")
     ap.add_argument("topic", help="Gerrit topic name")
-    ap.add_argument("--gerrit", help="Gerrit base URL, e.g. https://gerrit.example.com")
+    ap.add_argument("--gerrit",
+                    help="Gerrit host: host / user@host:port / ssh:// or http(s):// URL")
     ap.add_argument("--status", default="open", choices=["open", "merged", "any"],
                     help="filter changes by status (default: open)")
     ap.add_argument("--branch", help="only pick changes targeting this branch")
@@ -177,14 +183,20 @@ def main():
     if not root:
         die("not inside a repo workspace (no .repo directory found in ancestors)")
 
-    gerrit = args.gerrit or os.environ.get("GERRIT_URL") or detect_gerrit(root)
-    if not gerrit:
-        die("cannot determine Gerrit URL; pass --gerrit or set GERRIT_URL")
-    gerrit = gerrit.rstrip("/")
+    target = args.gerrit or os.environ.get("GERRIT_URL") or detect_gerrit(root)
+    if not target:
+        die("cannot determine Gerrit host; pass --gerrit or set GERRIT_URL")
+    dest, port = parse_ssh_target(target)
+
+    terms = [f'topic:"{args.topic}"']
+    if args.status != "any":
+        terms.append(f"status:{args.status}")
+    if args.branch:
+        terms.append(f'branch:"{args.branch}"')
 
     print(f"repo root : {root}")
-    print(f"gerrit    : {gerrit}")
-    changes = query_changes(gerrit, args.topic, args.status, args.branch)
+    print(f"gerrit    : ssh://{dest}:{port}")
+    changes = ssh_query(dest, port, terms)
     if not changes:
         die(f"no changes found for topic {args.topic!r} (status={args.status})")
     print(f"topic     : {args.topic} ({len(changes)} changes)\n")
@@ -194,8 +206,8 @@ def main():
 
     for c in order_changes(changes):
         proj = c["project"]
-        num = c["_number"]
-        ps = c["revisions"][c["current_revision"]]["_number"]
+        num = c["number"]
+        ps = c["patchset"]
         label = f'{num}/{ps} [{proj}] "{c["subject"]}"'
         path = paths.get(proj)
 
