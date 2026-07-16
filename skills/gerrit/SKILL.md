@@ -1,0 +1,93 @@
+---
+name: gerrit
+description: >-
+  在 AOSP（repo 管理的多仓库）工作区里操作 Gerrit：把同一个 topic 下的所有 change
+  按依赖顺序 cherry-pick 到各自对应的项目目录——自动查询 topic、自动把 project 映射到
+  本地路径、按 relation chain 排序、跳过已应用的 change、冲突后可续跑。当用户说
+  「把 gerrit 上 topic X 的 patch 都摘下来」「cherry-pick 某个 topic」「拉某个 topic
+  的所有 change 到本地」时使用；单个 change 的摘取也适用。
+---
+
+# gerrit
+
+核心是 `scripts/gerrit_topic_pick.py`（纯 python3 标准库，无第三方依赖），
+在 repo 工作区内任意目录运行即可。
+
+## 前置条件
+
+- 当前目录在一个 **repo 工作区**内（向上能找到 `.repo/`），`repo`、`git` 在 PATH 里。
+- **Gerrit 地址**按此顺序确定：`--gerrit` 参数 → `GERRIT_URL` 环境变量 → manifest 里
+  remote 的 `review="..."` 属性（脚本自动解析 `repo manifest -o -`）。公司内部 Gerrit
+  一般 manifest 里就有，不用手动传。
+- **认证**：Gerrit 匿名可读则无需配置；否则在 `~/.netrc` 加一行 HTTP 凭据
+  （密码在 Gerrit 网页 Settings → HTTP Credentials 生成，不是登录密码）：
+
+  ```
+  machine <gerrit-host> login <username> password <http-password>
+  ```
+
+  另外 `repo download` 走 git 协议做实际 fetch，需保证平时 `repo sync` 用的认证可用。
+- cherry-pick 会落在各项目**当前检出的分支**上。先确认用户各项目在正确分支上；若在
+  detached HEAD，建议先 `repo start <topic-branch> --all`（或只在受影响项目上建分支）。
+
+## 工作流
+
+1. **确认参数**：向用户要 topic 名；Gerrit 地址、目标分支过滤（`--branch`）通常可自动
+   推断/省略，不确定再问。
+2. **先 dry-run 看计划**：
+
+   ```bash
+   python3 scripts/gerrit_topic_pick.py <topic> --dry-run
+   ```
+
+   输出每个 change 的「编号/patchset、project、标题、映射到的本地目录」及应用顺序。
+   有 SKIP（本地 manifest 没有该 project）或 change 数量意外时，先把计划给用户确认。
+3. **正式执行**：去掉 `--dry-run` 重跑。脚本对每个 change 执行
+   `repo download --cherry-pick <project> <num>/<patchset>`。
+4. **冲突处理**：某个 change 冲突时脚本停下并打印出错目录。进入该目录
+   `git status` → 解决冲突 → `git add` → `git cherry-pick --continue`，
+   然后**重跑同一条命令**——已应用的 change 会按 Change-Id 自动跳过，不会重复摘取。
+
+## 参数速查
+
+| 参数 | 说明 |
+| --- | --- |
+| `topic`（必填） | Gerrit topic 名 |
+| `--gerrit URL` | Gerrit 地址，如 `https://gerrit.example.com` |
+| `--status open\|merged\|any` | 按状态过滤，默认 `open` |
+| `--branch BRANCH` | 只摘取目标为该分支的 change（topic 跨分支复用时需要） |
+| `--dry-run` | 只打印计划不执行 |
+| `--continue-on-fail` | 单个 change 失败后继续摘取其余的（默认失败即停） |
+
+## 脚本行为要点
+
+- 查询：`GET /changes/?q=topic:"<topic>"+status:open&o=CURRENT_REVISION&o=CURRENT_COMMIT`，
+  自动剥掉 Gerrit 响应前缀 `)]}'`；有 `~/.netrc` 凭据时优先走 `/a/` 认证端点。
+- 顺序：同一 relation chain 内 parent 先应用（按 current revision 的 parent commit
+  拓扑排序），其余按 change 编号升序。
+- project → 本地目录：解析 `repo list` 的 `path : project` 映射。
+- 幂等：应用前先 `git log --grep "Change-Id: <id>"` 检查，已存在则跳过。
+
+## 手动兜底（脚本不可用时）
+
+查询 topic 下的 change：
+
+```bash
+curl -s "https://<gerrit>/changes/?q=topic:%22<topic>%22+status:open&o=CURRENT_REVISION" \
+  | tail -n +2 | python3 -m json.tool
+```
+
+单个 change 摘取（二选一）：
+
+```bash
+# 方式一：repo 自带（推荐，自动找目录）
+repo download --cherry-pick <project> <change-number>/<patchset>
+
+# 方式二：裸 git（NN 是 change 编号的后两位）
+cd <项目目录>
+git fetch <gerrit-url>/<project> refs/changes/<NN>/<change-number>/<patchset>
+git cherry-pick FETCH_HEAD
+```
+
+回滚：单个 change 用 `git -C <目录> reset --hard HEAD~1`（或 `cherry-pick --abort`）；
+整个 topic 弄乱了可对受影响项目 `repo sync <project>...` 恢复。

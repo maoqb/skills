@@ -17,6 +17,15 @@
       "skills": [
         "./skills/write-drawdoc"
       ]
+    },
+    {
+      "name": "gerrit",
+      "description": "在 AOSP/repo 多仓库工作区里，把 Gerrit 同一个 topic 下的所有 change 按依赖顺序 cherry-pick 到各自对应的项目目录：自动查询 topic、project→本地路径映射、relation chain 排序、跳过已应用的 change、冲突后可续跑。",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/gerrit"
+      ]
     }
   ]
 }
