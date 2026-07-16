@@ -68,6 +68,7 @@ description: >-
 | `--status open\|merged\|any` | 按状态过滤，默认 `open` |
 | `--branch BRANCH` | 只摘取目标为该分支的 change（topic 跨分支复用时需要） |
 | `--dry-run` | 只打印计划不执行 |
+| `--verify` | 对已应用的 change 做内容校验：fetch 最新 patchset 并比对 `git patch-id`，本地是旧版本时标 `OUTDATED`（退出码 3），给出手动更新指引，**不自动改历史** |
 | `--continue-on-fail` | 单个 change 失败后继续摘取其余的（默认失败即停） |
 
 ## 脚本行为要点
@@ -78,6 +79,16 @@ description: >-
   拓扑排序），其余按 change 编号升序。
 - project → 本地目录：解析 `repo list` 的 `path : project` 映射。
 - 幂等：应用前先 `git log --grep "Change-Id: <id>"` 检查，已存在则跳过。
+  注意默认只认 Change-Id，**不校验本地摘的是不是最新 patchset**（cherry-pick 重写
+  SHA、commit message 里也没有 patchset 号，所以比不了版本号）。
+- `--verify` 补上这个盲区：对每个已应用的 change，`git fetch` 其当前 patchset 的
+  ref（`refs/changes/NN/<num>/<ps>`，复用项目自己的 remote 认证），再用
+  `git patch-id --stable` 比对 diff 内容哈希——它对 SHA/父提交/时间戳不敏感，
+  内容一致即最新。不一致标 `OUTDATED` 并打印处理建议（`git rebase -i` 删掉旧
+  commit 后重跑脚本重摘），脚本自身绝不改写历史。fetch 失败或算不出 patch-id 时
+  标 inconclusive、按已应用跳过。
+- 用户反馈「之前摘的 patch 在 gerrit 上更新了」「检查一下本地是不是最新的 patchset」
+  这类需求时，用 `--verify --dry-run` 组合（verify 不依赖 dry-run，两者可独立用）。
 
 ## 手动兜底（脚本不可用时）
 

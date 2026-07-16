@@ -3,7 +3,8 @@
 
 Usage:
     gerrit_topic_pick.py TOPIC [--gerrit HOST] [--status open|merged|any]
-                               [--branch BRANCH] [--dry-run] [--continue-on-fail]
+                               [--branch BRANCH] [--dry-run] [--verify]
+                               [--continue-on-fail]
 
 Requirements:
     - python3 (stdlib only)
@@ -22,6 +23,13 @@ Gerrit host resolution order: --gerrit flag > GERRIT_URL env var > first
 The script is idempotent: changes whose Change-Id already appears in the
 target project's history are skipped, so after resolving a conflict
 (`git cherry-pick --continue`) just re-run the same command.
+
+By default "already applied" only means the Change-Id exists locally — the
+local commit may have been picked from an older patchset. Pass --verify to
+additionally fetch each applied change's current patchset and compare
+`git patch-id --stable` (a hash of the diff content, insensitive to SHA /
+parents / dates); mismatches are reported as OUTDATED with manual-fix
+guidance, and the script exits 3. History is never rewritten automatically.
 """
 
 import argparse
@@ -103,10 +111,13 @@ def normalize(raw):
     ps = raw.get("currentPatchSet")
     if not ps:
         die(f"change {raw.get('number')} has no currentPatchSet in query output")
+    num = int(raw["number"])
+    psnum = int(ps["number"])
     return {
-        "number": int(raw["number"]),
-        "patchset": int(ps["number"]),
+        "number": num,
+        "patchset": psnum,
         "revision": ps["revision"],
+        "ref": ps.get("ref") or f"refs/changes/{num % 100:02d}/{num}/{psnum}",
         "parents": ps.get("parents", []),
         "project": raw["project"],
         "subject": raw.get("subject", ""),
@@ -155,13 +166,51 @@ def project_paths(root):
     return mapping
 
 
-def already_applied(root, path, change_id):
+def find_applied_commit(wd, change_id):
+    """Return the SHA of the local commit carrying this Change-Id, or None."""
     r = subprocess.run(
         ["git", "log", "--max-count=1", "--format=%H",
          "--grep", f"Change-Id: {change_id}", "HEAD"],
-        cwd=os.path.join(root, path), capture_output=True, text=True,
+        cwd=wd, capture_output=True, text=True,
     )
-    return r.returncode == 0 and bool(r.stdout.strip())
+    sha = r.stdout.strip()
+    return sha if r.returncode == 0 and sha else None
+
+
+def patch_id(wd, rev):
+    """`git patch-id --stable` of a commit: hashes the diff content only."""
+    diff = subprocess.run(
+        ["git", "diff-tree", "-p", rev], cwd=wd, capture_output=True, text=True)
+    if diff.returncode != 0:
+        return None
+    pid = subprocess.run(
+        ["git", "patch-id", "--stable"],
+        cwd=wd, input=diff.stdout, capture_output=True, text=True)
+    out = pid.stdout.split()
+    return out[0] if pid.returncode == 0 and out else None
+
+
+def verify_up_to_date(wd, local_sha, change):
+    """Fetch the change's current patchset and compare patch-ids.
+
+    Returns (verdict, detail): verdict is "current", "outdated" or "unknown".
+    """
+    remotes = subprocess.run(
+        ["git", "remote"], cwd=wd, capture_output=True, text=True).stdout.split()
+    if not remotes:
+        return "unknown", "no git remote configured"
+    fetch = subprocess.run(
+        ["git", "fetch", "--quiet", remotes[0], change["ref"]],
+        cwd=wd, capture_output=True, text=True)
+    if fetch.returncode != 0:
+        return "unknown", f"fetch {change['ref']} failed: {fetch.stderr.strip()}"
+    local_pid = patch_id(wd, local_sha)
+    remote_pid = patch_id(wd, "FETCH_HEAD")
+    if not local_pid or not remote_pid:
+        return "unknown", "could not compute patch-id"
+    if local_pid == remote_pid:
+        return "current", ""
+    return "outdated", f"local {local_sha[:12]} differs from patchset {change['patchset']}"
 
 
 def main():
@@ -175,6 +224,10 @@ def main():
     ap.add_argument("--branch", help="only pick changes targeting this branch")
     ap.add_argument("--dry-run", action="store_true",
                     help="print the pick plan without applying anything")
+    ap.add_argument("--verify", action="store_true",
+                    help="for already-applied changes, fetch the current "
+                         "patchset and compare diff content (git patch-id); "
+                         "report OUTDATED on mismatch")
     ap.add_argument("--continue-on-fail", action="store_true",
                     help="keep going after a failed cherry-pick instead of stopping")
     args = ap.parse_args()
@@ -202,7 +255,7 @@ def main():
     print(f"topic     : {args.topic} ({len(changes)} changes)\n")
 
     paths = project_paths(root)
-    failures, skipped_projects = [], []
+    failures, skipped_projects, outdated = [], [], []
 
     for c in order_changes(changes):
         proj = c["project"]
@@ -215,8 +268,28 @@ def main():
             print(f"SKIP {label}: project not in local manifest")
             skipped_projects.append(label)
             continue
-        if already_applied(root, path, c["change_id"]):
-            print(f"SKIP {label}: already applied in {path}")
+        wd = os.path.join(root, path)
+        local_sha = find_applied_commit(wd, c["change_id"])
+        if local_sha:
+            if not args.verify:
+                print(f"SKIP {label}: already applied in {path}")
+                continue
+            verdict, detail = verify_up_to_date(wd, local_sha, c)
+            if verdict == "current":
+                print(f"SKIP {label}: already applied in {path} (verified current)")
+            elif verdict == "unknown":
+                print(f"SKIP {label}: already applied in {path} "
+                      f"(verify inconclusive: {detail})")
+            else:
+                outdated.append(label)
+                print(f"OUTDATED {label}: {detail} in {path}")
+                print(f"  the local pick is from an older patchset; to update, "
+                      f"drop the old commit first, e.g.:")
+                print(f"    cd {wd}")
+                print(f"    git rebase -i {local_sha}^   # delete the "
+                      f"{local_sha[:12]} line, resolve if needed")
+                print(f"  then re-run this script to pick patchset {ps}. "
+                      f"History is not rewritten automatically.")
             continue
 
         print(f"PICK {label} -> {path}")
@@ -244,6 +317,9 @@ def main():
         print(f"{len(skipped_projects)} change(s) skipped: project missing locally.")
     if failures:
         die(f"{len(failures)} change(s) failed to apply", code=2)
+    if outdated:
+        die(f"{len(outdated)} applied change(s) are OUTDATED vs the current "
+            f"patchset on Gerrit (see guidance above)", code=3)
     print("done.")
 
 

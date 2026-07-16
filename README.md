@@ -49,7 +49,8 @@ DrawDocs 的本地文件夹 / GitHub 模式打开。技能内置 `scripts/drawdo
 - `repo list` 自动把 project 映射到本地目录，逐个 `repo download --cherry-pick`。
 - 同一 relation chain 内 parent 先应用；已应用的 change 按 Change-Id 自动跳过，
   冲突解决后重跑同一条命令即可续摘。
-- 支持 `--dry-run` 先看计划、`--status` / `--branch` 过滤。
+- 支持 `--dry-run` 先看计划、`--status` / `--branch` 过滤；`--verify` 用
+  `git patch-id` 比对 diff 内容，检出本地摘的是旧 patchset 的 change（标 `OUTDATED`）。
 
 用「cherry-pick 某个 topic」「把 gerrit 上 topic X 的 patch 都摘下来」等触发。
 
