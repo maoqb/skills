@@ -27,8 +27,17 @@ description: >-
   ssh -p 29418 <gerrit-host> gerrit version
   ```
 
-  若 ssh 用户名和 Gerrit 账号不一致，在 `~/.ssh/config` 里配 `User`，或
-  `--gerrit user@host` 显式指定。
+  平时 `repo sync` 走 ssh 能正常同步的话，说明认证已经通了，无需任何额外配置。
+  若 ssh 用户名和 Gerrit 账号不一致导致认证失败，用 `--gerrit user@host` 显式指定
+  用户名即可。
+
+## 禁止事项
+
+- **绝不修改机器上的任何配置文件**：`~/.ssh/config`、`~/.gitconfig`、`~/.netrc`、
+  repo/manifest 配置等一律只读。认证或连通性有问题时，把错误和建议报告给用户，
+  由用户自己处理；命令行能解决的（如 `--gerrit user@host`）优先走命令行参数。
+- 不执行 `repo sync`、`git reset`、`git checkout` 等会改动用户现有工作状态的命令，
+  除非用户明确要求（如回滚）。skill 对工作区的写操作仅限 cherry-pick 本身。
 - cherry-pick 会落在各项目**当前检出的分支**上。先确认用户各项目在正确分支上；若在
   detached HEAD，建议先 `repo start <topic-branch> --all`（或只在受影响项目上建分支）。
 
