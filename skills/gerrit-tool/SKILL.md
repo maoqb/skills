@@ -45,15 +45,16 @@ description: >-
 
 1. **确认参数**：向用户要 topic 名；Gerrit 地址、目标分支过滤（`--branch`）通常可自动
    推断/省略，不确定再问。
-2. **先 dry-run 看计划**：
+2. **先 dry-run 看计划**（**始终带上 `--verify`**，下同）：
 
    ```bash
-   python3 scripts/gerrit_topic_pick.py <topic> --dry-run
+   python3 scripts/gerrit_topic_pick.py <topic> --dry-run --verify
    ```
 
-   输出每个 change 的「编号/patchset、project、标题、映射到的本地目录」及应用顺序。
-   有 SKIP（本地 manifest 没有该 project）或 change 数量意外时，先把计划给用户确认。
-3. **正式执行**：去掉 `--dry-run` 重跑。脚本对每个 change 执行
+   输出每个 change 的「编号/patchset、project、标题、映射到的本地目录」及应用顺序，
+   并校验已应用的 change 是否为最新 patchset。有 SKIP（本地 manifest 没有该
+   project）、OUTDATED 或 change 数量意外时，先把情况给用户确认。
+3. **正式执行**：去掉 `--dry-run`（保留 `--verify`）重跑。脚本对每个 change 执行
    `repo download --cherry-pick <project> <num>/<patchset>`。
 4. **冲突处理**：某个 change 冲突时脚本停下并打印出错目录。进入该目录
    `git status` → 解决冲突 → `git add` → `git cherry-pick --continue`，
@@ -68,7 +69,7 @@ description: >-
 | `--status open\|merged\|any` | 按状态过滤，默认 `open` |
 | `--branch BRANCH` | 只摘取目标为该分支的 change（topic 跨分支复用时需要） |
 | `--dry-run` | 只打印计划不执行 |
-| `--verify` | 对已应用的 change 做内容校验：fetch 最新 patchset 并比对 `git patch-id`，本地是旧版本时标 `OUTDATED`（退出码 3），给出手动更新指引，**不自动改历史** |
+| `--verify` | 对已应用的 change 做内容校验：fetch 最新 patchset 并比对 `git patch-id`，本地是旧版本时标 `OUTDATED`（退出码 3），给出手动更新指引，**不自动改历史**。**本 skill 约定每次运行都带上它** |
 | `--continue-on-fail` | 单个 change 失败后继续摘取其余的（默认失败即停） |
 
 ## 脚本行为要点
@@ -87,8 +88,9 @@ description: >-
   内容一致即最新。不一致标 `OUTDATED` 并打印处理建议（`git rebase -i` 删掉旧
   commit 后重跑脚本重摘），脚本自身绝不改写历史。fetch 失败或算不出 patch-id 时
   标 inconclusive、按已应用跳过。
-- 用户反馈「之前摘的 patch 在 gerrit 上更新了」「检查一下本地是不是最新的 patchset」
-  这类需求时，用 `--verify --dry-run` 组合（verify 不依赖 dry-run，两者可独立用）。
+- **每次运行都带 `--verify`**（用户明确要求跳过校验时才省略）：代价只是对已应用的
+  change 各多一次 fetch，换来的是本地旧 patchset 一定会被发现并以 OUTDATED 报告，
+  留给用户处理。退出码 3 表示有 OUTDATED 项，把列表和处理指引转述给用户。
 
 ## 手动兜底（脚本不可用时）
 
