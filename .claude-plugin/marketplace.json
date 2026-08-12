@@ -29,7 +29,7 @@
     },
     {
       "name": "docforge",
-      "description": "从代码、文档、issue、commit 或笔记等有界源材料生成可溯源的技术文档：每条事实和图元素都有 provenance，并按 gather-author-verify 质量门串行推进。",
+      "description": "从代码、文档、issue、commit 或笔记等有界源材料生成可溯源的技术文档：每条事实和图元素都有 provenance，全部配图强制使用当前最强可用的 ChatGPT 图像模型，并按取据-成文-核验质量门串行推进。",
       "source": "./",
       "strict": false,
       "skills": [

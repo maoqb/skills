@@ -59,8 +59,9 @@ DrawDocs 的本地文件夹 / GitHub 模式打开。技能内置 `scripts/drawdo
 
 从代码、文档、issue、commit 或笔记等**有界源材料**生成一篇可溯源的技术文档。它把事实提取、结构与
 图表撰写、质量复核分为串行的 GATHER → AUTHOR → VERIFY 三道门：每一条事实性论断和每个图元素都必须
-映射到带 provenance 的 fact id；结构图使用手写 HTML/SVG，时序图才使用 Mermaid。适合「根据这个仓库
-写一篇系统设计文档」「从这些变更整理技术说明」等需要可靠取据和可审计图文的请求。
+映射到带 provenance 的 fact id；**所有配图强制使用当前最强可用的 ChatGPT 图像生成模型**，不允许回退
+到 Mermaid、手写 SVG/HTML 或其他模型。适合「根据这个仓库写一篇系统设计文档」「从这些变更整理技术说明」
+等需要可靠取据和可审计图文的请求。
 
 该 skill 要求当前项目已经包含 DocForge 引擎（`AGENTS.md`、`scripts/docforge.py` 和
 `.claude/contracts/`）。它不会猜造缺失的契约或来源。
