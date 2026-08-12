@@ -1,11 +1,11 @@
 # maoqb-skills
 
-A personal [Claude Code](https://claude.com/claude-code) skills marketplace.
-Add it once and install any skill below on any device.
+个人 AI 编程技能仓库。所有技能以通用的 `SKILL.md` 形式维护，可供 **Claude Code** 与 **Codex** 使用；
+`.claude-plugin/marketplace.json` 仅是 Claude Code 的 marketplace 安装清单，并不限定技能本身的运行环境。
 
 ## Install
 
-In Claude Code:
+在 Claude Code 中：
 
 ```
 /plugin marketplace add maoqb/skills
@@ -14,9 +14,10 @@ In Claude Code:
 /plugin install docforge@maoqb-skills
 ```
 
-The first command registers this repo as a marketplace; the second installs a
-skill from it. Restart Claude Code (or run `/plugin`) if a newly installed skill
-doesn't show up immediately.
+第一条命令注册 marketplace，后两条安装技能。新技能未显示时，重启 Claude Code 或运行 `/plugin`。
+
+在 Codex 中，将所需的 `skills/<skill-name>/SKILL.md` 作为可用 skill 安装或加入个人 skills 目录即可；
+各技能的正文不依赖 Claude 专属的 slash command、Task 工具或项目配置。
 
 To update later:
 
@@ -63,8 +64,8 @@ DrawDocs 的本地文件夹 / GitHub 模式打开。技能内置 `scripts/drawdo
 到 Mermaid、手写 SVG/HTML 或其他模型。适合「根据这个仓库写一篇系统设计文档」「从这些变更整理技术说明」
 等需要可靠取据和可审计图文的请求。
 
-该 skill 要求当前项目已经包含 DocForge 引擎（`AGENTS.md`、`scripts/docforge.py` 和
-`.claude/contracts/`）。它不会猜造缺失的契约或来源。
+它是独立的技术写作 workflow：自行维护范围、事实账本、大纲、图稿溯源与审稿记录，不要求目标项目预置
+任何 DocForge 文件或配置。
 
 ## Layout
 

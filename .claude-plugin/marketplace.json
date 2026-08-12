@@ -5,7 +5,7 @@
     "email": "realqingbo@gmail.com"
   },
   "metadata": {
-    "description": "Personal Claude Code skills marketplace",
+    "description": "Personal AI coding skills repository; Claude Code marketplace metadata is included for installation compatibility.",
     "version": "1.0.0"
   },
   "plugins": [
