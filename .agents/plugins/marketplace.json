@@ -1,0 +1,44 @@
+{
+  "name": "maoqb-skills",
+  "interface": {
+    "displayName": "Maoqb Skills"
+  },
+  "plugins": [
+    {
+      "name": "docforge",
+      "source": {
+        "source": "local",
+        "path": "./plugins/docforge"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "write-drawdoc",
+      "source": {
+        "source": "local",
+        "path": "./plugins/write-drawdoc"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "gerrit-tool",
+      "source": {
+        "source": "local",
+        "path": "./plugins/gerrit-tool"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

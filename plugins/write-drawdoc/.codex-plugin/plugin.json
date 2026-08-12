@@ -1,0 +1,23 @@
+{
+  "name": "write-drawdoc",
+  "version": "1.0.0",
+  "description": "Create editable DrawDocs documents with text and diagrams.",
+  "author": {
+    "name": "maoqb",
+    "email": "realqingbo@gmail.com"
+  },
+  "homepage": "https://github.com/maoqb/skills",
+  "repository": "https://github.com/maoqb/skills",
+  "license": "MIT",
+  "keywords": ["drawdocs", "drawdoc", "documentation"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Write DrawDoc",
+    "shortDescription": "Create editable documents and diagrams.",
+    "longDescription": "Create DrawDocs-native documents containing Markdown, editable diagrams, whiteboards, and mind maps.",
+    "developerName": "maoqb",
+    "category": "Productivity",
+    "capabilities": ["Write"],
+    "defaultPrompt": ["Use $write-drawdoc to create an editable technical document."]
+  }
+}

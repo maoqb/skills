@@ -1,0 +1,23 @@
+{
+  "name": "docforge",
+  "version": "1.0.0",
+  "description": "Create high-quality, traceable technical documents from bounded source material.",
+  "author": {
+    "name": "maoqb",
+    "email": "realqingbo@gmail.com"
+  },
+  "homepage": "https://github.com/maoqb/skills",
+  "repository": "https://github.com/maoqb/skills",
+  "license": "MIT",
+  "keywords": ["technical-writing", "documentation", "provenance"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "DocForge",
+    "shortDescription": "Create traceable technical documentation.",
+    "longDescription": "Turn bounded source material into high-quality technical documents with evidence, review, and source-grounded images.",
+    "developerName": "maoqb",
+    "category": "Productivity",
+    "capabilities": ["Write"],
+    "defaultPrompt": ["Use $docforge to document this system from the source material."]
+  }
+}

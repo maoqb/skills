@@ -16,8 +16,15 @@
 
 第一条命令注册 marketplace，后两条安装技能。新技能未显示时，重启 Claude Code 或运行 `/plugin`。
 
-在 Codex 中，将所需的 `skills/<skill-name>/SKILL.md` 作为可用 skill 安装或加入个人 skills 目录即可；
-各技能的正文不依赖 Claude 专属的 slash command、Task 工具或项目配置。
+在 Codex 中：
+
+```
+codex plugin marketplace add maoqb/skills --ref main
+codex plugin add docforge@maoqb-skills
+```
+
+将 `docforge` 替换为 `write-drawdoc` 或 `gerrit-tool` 即可安装对应 plugin。三个技能共享同一份
+`SKILL.md` 内容，不依赖 Claude 专属的 slash command、Task 工具或项目配置。
 
 To update later:
 
@@ -73,16 +80,18 @@ DrawDocs 的本地文件夹 / GitHub 模式打开。技能内置 `scripts/drawdo
 .
 ├── .claude-plugin/
 │   └── marketplace.json     # marketplace + plugin definitions
-└── skills/
+├── .agents/plugins/marketplace.json  # Codex marketplace
+├── .claude-plugin/marketplace.json   # Claude Code marketplace
+└── plugins/
     ├── write-drawdoc/
-    │   ├── SKILL.md
-    │   ├── scripts/        # drawdoc.py — .drawdoc 组装器
-    │   └── references/     # format.md — .drawdoc 格式规范
-    └── gerrit-tool/
-        ├── SKILL.md
-        └── scripts/        # gerrit_topic_pick.py — topic 批量 cherry-pick
+    │   ├── .codex-plugin/plugin.json
+    │   └── skills/write-drawdoc/      # SKILL.md、脚本与格式参考
+    ├── gerrit-tool/
+    │   ├── .codex-plugin/plugin.json
+    │   └── skills/gerrit-tool/        # SKILL.md 与 topic 批量 cherry-pick 脚本
     └── docforge/
-        └── SKILL.md
+        ├── .codex-plugin/plugin.json
+        └── skills/docforge/SKILL.md
 ```
 
 ## License

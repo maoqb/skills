@@ -1,0 +1,23 @@
+{
+  "name": "gerrit-tool",
+  "version": "1.0.0",
+  "description": "Apply Gerrit topic changes to a repo-managed multi-repository workspace.",
+  "author": {
+    "name": "maoqb",
+    "email": "realqingbo@gmail.com"
+  },
+  "homepage": "https://github.com/maoqb/skills",
+  "repository": "https://github.com/maoqb/skills",
+  "license": "MIT",
+  "keywords": ["gerrit", "aosp", "cherry-pick"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Gerrit Tool",
+    "shortDescription": "Apply Gerrit topics across repo workspaces.",
+    "longDescription": "Query and apply Gerrit topic changes in dependency order across an AOSP or repo-managed workspace.",
+    "developerName": "maoqb",
+    "category": "Productivity",
+    "capabilities": ["Write"],
+    "defaultPrompt": ["Use $gerrit-tool to cherry-pick this Gerrit topic."]
+  }
+}

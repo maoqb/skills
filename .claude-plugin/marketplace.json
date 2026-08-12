@@ -12,7 +12,7 @@
     {
       "name": "write-drawdoc",
       "description": "撰写 DrawDocs 原生 .drawdoc 文档（Markdown 超集：正文/表格/列表/代码 + 内嵌可编辑的 drawio 图、Excalidraw 白板与 Mermaid 图 + 带宽度的图片），产物可在 DrawDocs（drawdocs.vercel.app）里拖入直接打开继续编辑。需要把图（流程图/架构图/时序图）和正文排到一篇可编辑文档时使用。",
-      "source": "./",
+      "source": "./plugins/write-drawdoc",
       "strict": false,
       "skills": [
         "./skills/write-drawdoc"
@@ -21,7 +21,7 @@
     {
       "name": "gerrit-tool",
       "description": "在 AOSP/repo 多仓库工作区里，把 Gerrit 同一个 topic 下的所有 change 按依赖顺序 cherry-pick 到各自对应的项目目录：ssh 查询 topic、project→本地路径映射、relation chain 排序、跳过已应用的 change、冲突后可续跑。",
-      "source": "./",
+      "source": "./plugins/gerrit-tool",
       "strict": false,
       "skills": [
         "./skills/gerrit-tool"
@@ -30,7 +30,7 @@
     {
       "name": "docforge",
       "description": "从代码、文档、issue、commit 或笔记等有界源材料生成可溯源的技术文档：每条事实和图元素都有 provenance，全部配图强制使用当前最强可用的 ChatGPT 图像模型，并按取据-成文-核验质量门串行推进。",
-      "source": "./",
+      "source": "./plugins/docforge",
       "strict": false,
       "skills": [
         "./skills/docforge"
