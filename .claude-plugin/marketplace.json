@@ -35,6 +35,15 @@
       "skills": [
         "./skills/docforge"
       ]
+    },
+    {
+      "name": "aosp-change-doc",
+      "description": "在 AOSP / Android platform 源码中完成系统或 Framework 需求，并交付实验验证与 HTML 方案文档：源码改动、必要的 demo APK、模块或整机编译、模拟器验证，以及 Gerrit 风格双栏代码 diff。",
+      "source": "./plugins/aosp-change-doc",
+      "strict": false,
+      "skills": [
+        "./skills/aosp-change-doc"
+      ]
     }
   ]
 }

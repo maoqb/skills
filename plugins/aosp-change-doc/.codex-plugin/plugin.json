@@ -1,0 +1,23 @@
+{
+  "name": "aosp-change-doc",
+  "version": "1.0.0",
+  "description": "Implement and document AOSP platform changes with validation and HTML review docs.",
+  "author": {
+    "name": "maoqb",
+    "email": "realqingbo@gmail.com"
+  },
+  "homepage": "https://github.com/maoqb/skills",
+  "repository": "https://github.com/maoqb/skills",
+  "license": "MIT",
+  "keywords": ["aosp", "android", "framework", "documentation"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "AOSP Change Doc",
+    "shortDescription": "Implement and document AOSP changes.",
+    "longDescription": "Handle AOSP platform changes end to end: scoped source edits, optional demo APKs, build or emulator validation, and dense HTML solution documents with Gerrit-style code diffs.",
+    "developerName": "maoqb",
+    "category": "Productivity",
+    "capabilities": ["Write"],
+    "defaultPrompt": ["Use $aosp-change-doc to implement and document this AOSP requirement."]
+  }
+}
