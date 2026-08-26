@@ -41,10 +41,10 @@
       "category": "Productivity"
     },
     {
-      "name": "aosp-change-doc",
+      "name": "aosp-solution-doc",
       "source": {
         "source": "local",
-        "path": "./plugins/aosp-change-doc"
+        "path": "./plugins/aosp-solution-doc"
       },
       "policy": {
         "installation": "AVAILABLE",

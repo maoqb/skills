@@ -12,7 +12,7 @@
 /plugin install write-drawdoc@maoqb-skills
 /plugin install gerrit-tool@maoqb-skills
 /plugin install docforge@maoqb-skills
-/plugin install aosp-change-doc@maoqb-skills
+/plugin install aosp-solution-doc@maoqb-skills
 ```
 
 第一条命令注册 marketplace，后续命令安装技能。新技能未显示时，重启 Claude Code 或运行 `/plugin`。
@@ -24,7 +24,7 @@ codex plugin marketplace add maoqb/skills --ref main
 codex plugin add docforge@maoqb-skills
 ```
 
-将 `docforge` 替换为 `write-drawdoc`、`gerrit-tool` 或 `aosp-change-doc` 即可安装对应 plugin。四个技能共享同一套
+将 `docforge` 替换为 `write-drawdoc`、`gerrit-tool` 或 `aosp-solution-doc` 即可安装对应 plugin。四个技能共享同一套
 `SKILL.md` 格式，不依赖 Claude 专属的 slash command、Task 工具或项目配置。
 
 To update later:
@@ -75,7 +75,7 @@ DrawDocs 的本地文件夹 / GitHub 模式打开。技能内置 `scripts/drawdo
 它是独立的技术写作 workflow：自行维护范围、事实账本、大纲、图稿溯源与审稿记录，不要求目标项目预置
 任何 DocForge 文件或配置。
 
-### aosp-change-doc
+### aosp-solution-doc
 
 在 **AOSP / Android platform 源码工作区**里完成系统或 Framework 需求，并把实现、实验和评审材料整理成
 可复现交付。它覆盖源码改动、必要的 `development/samples/<DemoName>` demo APK、模块或整机编译、
@@ -100,9 +100,9 @@ DrawDocs 的本地文件夹 / GitHub 模式打开。技能内置 `scripts/drawdo
     ├── gerrit-tool/
     │   ├── .codex-plugin/plugin.json
     │   └── skills/gerrit-tool/        # SKILL.md 与 topic 批量 cherry-pick 脚本
-    ├── aosp-change-doc/
+    ├── aosp-solution-doc/
     │   ├── .codex-plugin/plugin.json
-    │   └── skills/aosp-change-doc/    # AOSP 改动、验证与 HTML 方案文档工作流
+    │   └── skills/aosp-solution-doc/  # AOSP 改动、验证与 HTML 方案文档工作流
     └── docforge/
         ├── .codex-plugin/plugin.json
         └── skills/docforge/SKILL.md

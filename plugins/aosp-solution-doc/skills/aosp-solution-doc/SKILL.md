@@ -1,12 +1,12 @@
 ---
-name: aosp-change-doc
+name: aosp-solution-doc
 description: >-
   在 AOSP / Android platform 源码中完成系统或 Framework 需求，并交付实验验证与
   HTML 方案文档。当用户要求修改 AOSP、编译整机或模块、跑模拟器验证、补 demo APK、
   输出方案文档、代码修改位置或 Gerrit 风格 diff 时使用；普通 Android App 开发不要使用。
 ---
 
-# AOSP Change Doc
+# AOSP Solution Doc
 
 用于把一次 AOSP 需求做成可复现、可验证、可评审的交付：源码改动、必要的实验 APK、
 编译/模拟器验证，以及一份空间利用充分的 HTML 方案文档。

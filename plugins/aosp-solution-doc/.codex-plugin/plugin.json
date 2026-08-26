@@ -1,5 +1,5 @@
 {
-  "name": "aosp-change-doc",
+  "name": "aosp-solution-doc",
   "version": "1.0.0",
   "description": "Implement and document AOSP platform changes with validation and HTML review docs.",
   "author": {
@@ -12,12 +12,12 @@
   "keywords": ["aosp", "android", "framework", "documentation"],
   "skills": "./skills/",
   "interface": {
-    "displayName": "AOSP Change Doc",
-    "shortDescription": "Implement and document AOSP changes.",
-    "longDescription": "Handle AOSP platform changes end to end: scoped source edits, optional demo APKs, build or emulator validation, and dense HTML solution documents with Gerrit-style code diffs.",
+    "displayName": "AOSP Solution Doc",
+    "shortDescription": "Implement and document AOSP requirements.",
+    "longDescription": "Handle AOSP platform requirements end to end: scoped source edits, optional demo APKs, build or emulator validation, and dense HTML solution documents with Gerrit-style code diffs.",
     "developerName": "maoqb",
     "category": "Productivity",
     "capabilities": ["Write"],
-    "defaultPrompt": ["Use $aosp-change-doc to implement and document this AOSP requirement."]
+    "defaultPrompt": ["Use $aosp-solution-doc to implement and document this AOSP requirement."]
   }
 }
